@@ -17,10 +17,12 @@
 
 ## Get started
 
-1. Download `FaceJutsu-windows-x64.zip` from the [latest release](../../releases/latest).
-2. Unzip it somewhere with room to spare, and open `FaceJutsu.exe`.
-3. Windows warns about new apps it doesn't recognize: choose **More info**, then **Run anyway**.
-4. The app opens in your browser. Choose **Download all** to fetch the models, then start swapping.
+1. Download the zip for your system from the [latest release](../../releases/latest), and unzip it somewhere with room to spare.
+2. Start FaceJutsu:
+   - **Windows** (`FaceJutsu-windows-x64.zip`): open `FaceJutsu.exe`. Windows warns about new apps it doesn't recognize: choose **More info**, then **Run anyway**. The first launch can take a moment while Windows checks it.
+   - **macOS** (`FaceJutsu-macos-arm64.zip` for Apple silicon, `FaceJutsu-macos-x64.zip` for Intel): macOS blocks apps from outside the App Store until you clear this one. In Terminal, in the unzipped folder, run `xattr -dr com.apple.quarantine .`, then `./FaceJutsu`.
+   - **Linux** (`FaceJutsu-linux-x64.zip`): in a terminal, in the unzipped folder, run `./FaceJutsu`. Chrome may need WebGPU turned on at `chrome://flags`.
+3. The app opens in your browser. Choose **Download all** to fetch the models, then start swapping.
 
 You'll need a recent version of **Chrome or Edge** and a computer with a graphics card. Keep the FaceJutsu window open while you work.
 
