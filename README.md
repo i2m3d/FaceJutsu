@@ -31,12 +31,12 @@ The easiest way is in your browser, with nothing to install:
 
 The desktop app is optional. It's the same app, but it keeps your files in folders next to it instead of in your browser.
 
-**The downloads aren't code-signed**, so Windows and macOS warn you before running them. That's a reasonable warning for an app from a publisher they can't verify. If you'd rather not run it, use the browser version, or [build it yourself](#build-it-yourself).
+**The downloads aren't code-signed or notarized yet**, so Windows and macOS warn you before running them. That's expected for a new app from a publisher they can't verify. You don't have to take the zip on trust: check it against the `SHA256SUMS.txt` file on the release page, or [build it yourself](#build-it-yourself) from the source. If you'd rather not run it at all, use the browser version.
 
 1. Download the zip for your system from the [latest release](../../releases/latest), and unzip it somewhere with room to spare.
 2. Start FaceJutsu:
-   - **Windows** (`FaceJutsu-windows-x64.zip`): open `FaceJutsu.exe`. Windows warns about apps it doesn't recognize. To run it anyway, choose **More info**, then **Run anyway**. The first launch can take a moment while Windows checks it.
-   - **macOS** (`FaceJutsu-macos-arm64.zip` for Apple silicon, `FaceJutsu-macos-x64.zip` for Intel): macOS blocks apps from outside the App Store. To run it anyway, open Terminal in the unzipped folder and run `xattr -dr com.apple.quarantine .`, which removes the "downloaded from the internet" mark from that folder. Then run `./FaceJutsu`.
+   - **Windows** (`FaceJutsu-windows-x64.zip`): open `FaceJutsu.exe`. If SmartScreen shows "Windows protected your PC", choose **More info**, then **Run anyway**. The first launch can take a moment while Windows checks it.
+   - **macOS** (`FaceJutsu-macos-arm64.zip` for Apple silicon, `FaceJutsu-macos-x64.zip` for Intel): macOS blocks the app on first launch. On recent versions, open **System Settings → Privacy & Security**, find the message about FaceJutsu, and choose **Open Anyway**. On older versions, right-click `FaceJutsu` and choose **Open**. Only if neither works, run `xattr -dr com.apple.quarantine .` in the unzipped folder, which removes the "downloaded from the internet" mark from that folder. Then run `./FaceJutsu`.
    - **Linux** (`FaceJutsu-linux-x64.zip`): in a terminal, in the unzipped folder, run `./FaceJutsu`. Chrome may need WebGPU turned on at `chrome://flags`.
 3. The app opens in your browser. Choose **Download all** to fetch the models, then start swapping.
 
