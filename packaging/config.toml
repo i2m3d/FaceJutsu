@@ -1,0 +1,31 @@
+# FaceJutsu settings. Restart FaceJutsu after changing them (model_urls only needs a page reload).
+
+# The port the app is served on, at http://localhost:<port>. If it's taken, the next free one is used.
+port = 24817
+
+# Open the app in your default browser on start.
+open_browser = true
+
+# Where the model files, your finished photos and videos, your saved work and the swapped frames go.
+# Relative paths start from the folder this file is in.
+models = "models"
+outputs = "outputs"
+work = "data/work"
+cache = "data/cache"
+
+# How many GB of swapped frames to keep, so they aren't swapped again. A minute of a close-up
+# takes about 1 GB of 1080p video; the more the better for long videos.
+cache_gb = 4
+
+# Where each model file comes from: the links on the start page, and Download all.
+# A file with no address has no link, and can still be put in the models folder by hand.
+[model_urls]
+# Needed
+"inswapper-128.int8.safetensors" = "https://huggingface.co/jakethessmake/fjt/resolve/main/inswapper-128.int8.safetensors"
+"arcface-r50.int8.safetensors" = "https://huggingface.co/jakethessmake/fjt/resolve/main/arcface-r50.int8.safetensors"
+"scrfd-10g.bf16.safetensors" = "https://huggingface.co/jakethessmake/fjt/resolve/main/scrfd-10g.bf16.safetensors"
+# Optional: Enhance
+"gpen-bfr-256.int8.safetensors" = "https://huggingface.co/jakethessmake/fjt/resolve/main/gpen-bfr-256.int8.safetensors"
+"gpen-bfr-512.int8.safetensors" = "https://huggingface.co/jakethessmake/fjt/resolve/main/gpen-bfr-512.int8.safetensors"
+# Optional: Objects
+"xseg.int8.safetensors" = "https://huggingface.co/jakethessmake/fjt/resolve/main/xseg.int8.safetensors"

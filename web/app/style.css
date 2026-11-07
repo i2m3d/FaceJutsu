@@ -1,0 +1,1032 @@
+/* FaceJutsu: one design system for the whole editor, in the "Ink & Seal" style: ink hairlines,
+   letterpress buttons that press down, paper keys for what's chosen, and small red seals.
+   1. fonts and tokens (colour, type, space, shape, elevation, motion)
+   2. base
+   3. components: buttons, icon buttons, segmented controls, switches, sliders, cards, floating paper,
+      popover, dialogs, spinners, overlines, drop zones, keys
+   4. the areas built from them: layout, canvas, setup, timeline, photos, settings
+   5. motion: the brand moments, and reduced motion
+   Every size, colour and timing below comes from a token; areas don't invent their own. */
+
+/* ------------------------------------------------------------------ 1. fonts (self-hosted: nothing is
+   fetched from another site) */
+@font-face {
+  font-family: "Instrument Sans"; font-style: normal; font-weight: 400 700; font-display: swap;
+  src: url("fonts/instrument-sans-var.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Bricolage Grotesque"; font-style: normal; font-weight: 500 800; font-display: swap;
+  src: url("fonts/bricolage-grotesque-var.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* the wordmark's dotless j (its dot is the seal) */
+@font-face {
+  font-family: "Bricolage Grotesque"; font-style: normal; font-weight: 500 800; font-display: swap;
+  src: url("fonts/bricolage-grotesque-dotless-j.woff2") format("woff2");
+  unicode-range: U+0237;
+}
+@font-face {
+  font-family: "JetBrains Mono"; font-style: normal; font-weight: 400 600; font-display: swap;
+  src: url("fonts/jetbrains-mono-var.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ------------------------------------------------------------------ 1. tokens */
+:root {
+  /* type: UI text, display (headings, overlines, the wordmark), mono (numbers that tick) */
+  --font-ui: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Bricolage Grotesque", var(--font-ui);
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --fs-micro: 10px;   /* tiny tags, seals */
+  --fs-caption: 11px; /* overlines, summaries, timecodes */
+  --fs-small: 12px;   /* controls, help */
+  --fs-body: 13px;    /* the base */
+  --fs-title: 15px;   /* emphasis, large buttons */
+  --fs-heading: 18px; /* empty states, dialogs */
+  --fs-display: 34px; /* the welcome */
+
+  /* space: a 4px grid (the name is the size) */
+  --s2: 2px; --s4: 4px; --s6: 6px; --s8: 8px; --s12: 12px; --s16: 16px; --s20: 20px; --s24: 24px; --s32: 32px; --s48: 48px;
+
+  /* shape: crisp corners; nested ones step down by the padding between them */
+  --r-xs: 3px; --r-sm: 4px; --r-md: 6px; --r-lg: 10px; --r-xl: 12px; --r-full: 999px;
+  /* control heights, one role each: xs inline remove, sm timeline rows, ctl segmented controls and
+     toolbars, md header and dialogs, lg the welcome's call to action */
+  --h-xs: 20px; --h-sm: 24px; --h-ctl: 28px; --h-md: 32px; --h-lg: 40px;
+  --ico-xs: 12px; --ico-sm: 14px; --ico-md: 16px; --ico-lg: 20px;
+  /* the letterpress edge under a button: pressed, it sinks onto it */
+  --edge: 3px; --edge-sm: 2px;
+
+  /* motion: a tool answers at once. Entrances ease out, exits are shorter and ease in, moves use
+     the standard curve; the spring is for the brand's moments only */
+  --dur-1: 80ms;   /* hover, a press's release */
+  --dur-2: 120ms;  /* small state changes, exits */
+  --dur-3: 160ms;  /* popovers, dialogs, toasts, folds, the thumb, switches */
+  --dur-4: 300ms;  /* panels arriving, the welcome */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.5, 0, 0.75, 0);
+  --ease-std: cubic-bezier(0.2, 0, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* layout */
+  --gut: 8px;
+  --rg: 3px;   /* between the timeline's rows and cells */
+  --sw: 340px;
+  --th: 240px;
+  --hw: 232px; /* timeline headers: the transport fits, with the duration (the edit tools float over the selection) */
+
+  /* colour, dark ("sumi"): warm ink, one accent (hanko red) for the primary action, progress, the
+     playhead and the seals. Canvas code reads these as hex. */
+  --bg: #0c0b0d;        /* the backdrop behind the panels */
+  --bg-2: #0f0e11;      /* the well: the canvas, lanes, control tracks */
+  --panel: #17151a;     /* panels and cards */
+  --panel-2: #221f25;   /* a selected header */
+  --line: #332f36;      /* ink hairlines */
+  --line-2: #4a4550;    /* stronger ink: outlines, edges */
+  --fg: #f2ede6;
+  --muted: #aba49f;
+  --faint: #8c8585;
+  --accent: #d93a22;
+  --accent-hover: #e0412a;
+  --accent-edge: #9b2614;  /* the red button's letterpress edge */
+  --accent-ink: #ffffff;
+  --paper: #f2ede6;
+  --ink: #121014;
+  --key-bg: #f2ede6;    /* a chosen option: a raised paper key */
+  --key-fg: #121014;
+  --key-edge: #b9b0a3;
+  --ring: #f2ede6;      /* selected: a paper outline */
+  --float-bg: #f2ede6;  /* bars and toasts over the media: paper */
+  --float-fg: #121014;
+  --float-muted: #5c565b;
+  --float-line: #d3cabd;
+  --float-edge: #b9b0a3;
+  --float-hover: rgb(18 16 20 / 0.08);
+  --float-press: rgb(18 16 20 / 0.14);
+  --float-good: #3f7a52;
+  --float-bad: #b3261e;
+  --good: #8fbf9f;
+  --warn: #d6b56e;
+  --bad: #ec8e83;
+  --hover: color-mix(in srgb, var(--fg) 7%, transparent);
+  --press: color-mix(in srgb, var(--fg) 12%, transparent);
+  --focus: color-mix(in srgb, var(--fg) 70%, transparent);
+  --scrim: rgb(0 0 0 / 0.55);
+  --well-in: inset 0 1px 3px rgb(0 0 0 / 0.6), inset 0 0 0 1px var(--line);
+  --e1: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.25);   /* panels */
+  --e2: 0 12px 28px rgb(0 0 0 / 0.45);                             /* floating paper */
+  --e3: 0 18px 48px rgb(0 0 0 / 0.5);                              /* popovers */
+  --e4: 0 30px 80px rgb(0 0 0 / 0.55);                             /* dialogs */
+  color-scheme: dark;
+  interpolate-size: allow-keywords;
+}
+/* light ("washi"): the same roles on warm paper; chosen keys are white, floating bars are ink */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #e7e1d6; --bg-2: #f0ebe2; --panel: #fbf8f3; --panel-2: #efe9df; --line: #ddd5c9; --line-2: #c3baad;
+    --fg: #1c191e; --muted: #5c565b; --faint: #6d6668; --accent-hover: #c6331c;
+    --key-bg: #ffffff; --key-fg: #1c191e; --key-edge: #cfc6b8; --ring: #1c191e;
+    --float-bg: #1c191e; --float-fg: #f2ede6; --float-muted: #aba49f; --float-line: #3d393f; --float-edge: #000000;
+    --float-hover: rgb(242 237 230 / 0.1); --float-press: rgb(242 237 230 / 0.16); --float-good: #8fbf9f; --float-bad: #ec8e83;
+    --good: #3f7a52; --warn: #94701f; --bad: #b3261e; --scrim: rgb(28 25 30 / 0.35);
+    --well-in: inset 0 1px 2px rgb(60 45 30 / 0.14), inset 0 0 0 1px var(--line);
+    --e1: 0 1px 2px rgb(60 45 30 / 0.06), 0 10px 28px rgb(60 45 30 / 0.08);
+    --e2: 0 12px 28px rgb(60 45 30 / 0.2); --e3: 0 18px 48px rgb(60 45 30 / 0.18); --e4: 0 30px 80px rgb(60 45 30 / 0.24);
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #e7e1d6; --bg-2: #f0ebe2; --panel: #fbf8f3; --panel-2: #efe9df; --line: #ddd5c9; --line-2: #c3baad;
+  --fg: #1c191e; --muted: #5c565b; --faint: #6d6668; --accent-hover: #c6331c;
+  --key-bg: #ffffff; --key-fg: #1c191e; --key-edge: #cfc6b8; --ring: #1c191e;
+  --float-bg: #1c191e; --float-fg: #f2ede6; --float-muted: #aba49f; --float-line: #3d393f; --float-edge: #000000;
+  --float-hover: rgb(242 237 230 / 0.1); --float-press: rgb(242 237 230 / 0.16); --float-good: #8fbf9f; --float-bad: #ec8e83;
+  --good: #3f7a52; --warn: #94701f; --bad: #b3261e; --scrim: rgb(28 25 30 / 0.35);
+  --well-in: inset 0 1px 2px rgb(60 45 30 / 0.14), inset 0 0 0 1px var(--line);
+  --e1: 0 1px 2px rgb(60 45 30 / 0.06), 0 10px 28px rgb(60 45 30 / 0.08);
+  --e2: 0 12px 28px rgb(60 45 30 / 0.2); --e3: 0 18px 48px rgb(60 45 30 / 0.18); --e4: 0 30px 80px rgb(60 45 30 / 0.24);
+  color-scheme: light;
+}
+
+/* ------------------------------------------------------------------ 2. base */
+/* no visible scrollbars: panels still scroll with the wheel or touchpad */
+* { box-sizing: border-box; scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; }
+html, body { margin: 0; height: 100%; }
+/* an editor, not a page: clicks and drags never select its text; only the fields a name is typed
+   in do */
+body {
+  background: var(--bg); color: var(--fg); overflow: hidden;
+  font: 400 var(--fs-body)/1.45 var(--font-ui);
+  -webkit-font-smoothing: antialiased; font-synthesis: none; text-rendering: optimizeLegibility;
+  -webkit-user-select: none; user-select: none;
+}
+input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-select: text; }
+body.dragging.x { cursor: col-resize; }
+body.dragging.y { cursor: row-resize; }
+[hidden] { display: none !important; }
+a { color: var(--fg); }
+button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:disabled { cursor: not-allowed; opacity: 0.45; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+svg { width: var(--ico-md); height: var(--ico-md); fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+svg .fill { fill: currentColor; stroke: none; }
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+/* ------------------------------------------------------------------ 3. components */
+
+/* -- text roles: overlines are set like a card's printed title */
+.label, .step-title, .out-head h3, .keys-grid h3 {
+  font: 700 var(--fs-caption)/1.2 var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg);
+}
+.label-row { display: flex; align-items: center; justify-content: space-between; gap: var(--s8); min-height: 18px; }
+.help { margin: 0; font-size: var(--fs-small); color: var(--faint); }
+.help:empty { display: none; }
+.help.center { text-align: center; }
+.help.warn { color: var(--warn); }
+.lead { margin: 0; max-width: 520px; color: var(--muted); }
+.link { background: none; border: 0; padding: 0; color: var(--muted); font-size: var(--fs-caption); }
+.link:hover { color: var(--fg); text-decoration: underline; }
+/* a seal: the small red stamp that numbers a step or marks what's chosen */
+i.seal {
+  display: inline-grid; place-items: center; flex: none; width: 16px; height: 16px; border-radius: 2px;
+  font: 700 9px/1 var(--font-ui); font-style: normal; letter-spacing: 0; color: var(--accent-ink); background: var(--accent); rotate: -4deg;
+}
+
+/* -- the wordmark: lowercase, the j's dot a red seal */
+.wordmark { font: 800 17px/1 var(--font-display); letter-spacing: -0.04em; color: var(--fg); white-space: nowrap; }
+.wordmark .j { position: relative; display: inline-block; }
+.wordmark .j::before {
+  content: ""; position: absolute; left: 0.125em; top: -0.03em; width: 0.17em; height: 0.17em;
+  background: var(--accent); border-radius: 0.02em; transform: rotate(-4deg);
+}
+/* the mark (the wink mask): its eye slit takes the surface it sits on */
+.mark { --mark-paper: var(--panel); flex: none; color: var(--fg); }
+
+/* -- buttons: letterpress. Each sits on an edge and sinks onto it when pressed (down at once, back
+   with an ease). Primary is the red stamp (one per view), secondary is inked, quiet icons get their
+   ink only on hover. */
+.primary, .xbtn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s8);
+  border: 0; border-radius: var(--r-md); font-weight: 600; white-space: nowrap;
+  background: var(--accent); color: var(--accent-ink);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18), 0 var(--edge) 0 var(--accent-edge);
+  transition: background-color var(--dur-1), translate var(--dur-1) var(--ease-std), box-shadow var(--dur-1) var(--ease-std);
+}
+.primary { height: var(--h-lg); padding: 0 var(--s20); font-size: var(--fs-title); }
+.primary:hover:not(:disabled), .xbtn:hover:not(:disabled) { background: var(--accent-hover); }
+.primary:active:not(:disabled), .xbtn:not(.run):active:not(:disabled) {
+  translate: 0 2px; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18), 0 1px 0 var(--accent-edge); transition-duration: 0s;
+}
+.ghost {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s6);
+  height: var(--h-md); padding: 0 var(--s12); border: 1px solid var(--line-2); border-radius: var(--r-md);
+  background: transparent; color: var(--fg); font-size: var(--fs-body); font-weight: 600; text-decoration: none; white-space: nowrap;
+  box-shadow: 0 var(--edge-sm) 0 var(--line-2);
+  transition: background-color var(--dur-1), translate var(--dur-1) var(--ease-std), box-shadow var(--dur-1) var(--ease-std);
+}
+.ghost:hover:not(:disabled) { background: var(--hover); }
+.ghost:active:not(:disabled) { translate: 0 1px; box-shadow: 0 1px 0 var(--line-2); transition-duration: 0s; }
+.ghost.sm { height: var(--h-sm); padding: 0 var(--s8); font-size: var(--fs-small); border-radius: var(--r-sm); }
+.ghost.lg { height: var(--h-lg); padding: 0 var(--s16); font-size: var(--fs-title); }
+.ghost.danger { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, transparent); box-shadow: 0 var(--edge-sm) 0 color-mix(in srgb, var(--bad) 45%, transparent); }
+.ghost.danger:hover:not(:disabled) { background: color-mix(in srgb, var(--bad) 10%, transparent); }
+/* quiet icon buttons, in three sizes */
+.icon-btn, .tbtn, .step-load, button.x {
+  flex: none; display: grid; place-items: center; padding: 0; border: 0; background: transparent; color: var(--muted); text-decoration: none;
+  transition: background-color var(--dur-1), color var(--dur-1), box-shadow var(--dur-1), translate var(--dur-1) var(--ease-std);
+}
+.icon-btn:hover:not(:disabled), .tbtn:hover:not(:disabled), .step-load:hover:not(:disabled), button.x:hover:not(:disabled) {
+  color: var(--fg); background: var(--hover); box-shadow: inset 0 0 0 1px var(--line-2), 0 1px 0 var(--line-2);
+}
+.icon-btn:active:not(:disabled), .tbtn:active:not(:disabled), .step-load:active:not(:disabled), button.x:active:not(:disabled) {
+  translate: 0 1px; box-shadow: inset 0 0 0 1px var(--line-2); transition-duration: 0s;
+}
+.icon-btn { width: var(--h-md); height: var(--h-md); border-radius: var(--r-md); }
+.icon-btn svg { width: var(--ico-md); height: var(--ico-md); }
+.tbtn, .step-load { width: var(--h-sm); height: var(--h-sm); border-radius: var(--r-sm); color: var(--fg); }
+.tbtn svg, .step-load svg { width: var(--ico-sm); height: var(--ico-sm); }
+button.x { width: var(--h-xs); height: var(--h-xs); border-radius: var(--r-sm); }
+button.x svg { width: var(--ico-xs); height: var(--ico-xs); stroke-width: 2; }
+
+/* -- segmented control: an inked well of options; the chosen one is a raised paper key marked with
+   a seal. One choice: the key is a thumb that slides to it (main.js places it). */
+.seg {
+  position: relative; isolation: isolate; display: flex; gap: 3px; min-width: 0; height: var(--h-ctl); padding: 3px;
+  background: var(--bg-2); border-radius: var(--r-md); box-shadow: var(--well-in);
+}
+.seg button {
+  flex: 1 1 auto; min-width: 0; padding: 0 var(--s4); border: 0; border-radius: var(--r-sm); background: transparent; color: var(--muted);
+  font-size: var(--fs-small); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: color var(--dur-2), background-color var(--dur-2), box-shadow var(--dur-2);
+}
+/* every option keeps room for the seal, so a pick never shifts the labels */
+.seg button::before {
+  content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 5px; vertical-align: 1px;
+  background: var(--accent); rotate: -6deg; opacity: 0; transition: opacity var(--dur-2);
+}
+.seg button[aria-checked="true"]::before { opacity: 1; }
+.seg button:hover:not([aria-checked="true"]):not(:disabled, [aria-disabled="true"]) { color: var(--fg); }
+/* an option this browser can't do: off, but its tooltip says how to turn it on (a click copies the flag) */
+.seg button[aria-disabled="true"] { cursor: not-allowed; opacity: 0.45; }
+.seg button[aria-disabled="true"].copies { cursor: copy; }
+.seg button[aria-disabled="true"].copied { opacity: 1; color: var(--fg); }
+.seg button[aria-checked="true"] { background: var(--key-bg); color: var(--key-fg); font-weight: 700; box-shadow: 0 var(--edge-sm) 0 var(--key-edge); }
+.seg.thumb::before {
+  content: ""; position: absolute; z-index: -1; top: 3px; bottom: 3px; left: 0; width: var(--tw, 0);
+  transform: translateX(var(--tx, 0)); border-radius: var(--r-sm); background: var(--key-bg); box-shadow: 0 var(--edge-sm) 0 var(--key-edge);
+}
+.seg.thumb.anim::before { transition: transform var(--dur-3) var(--ease-std), width var(--dur-3) var(--ease-std); }
+.seg.thumb button[aria-checked="true"] { background: transparent; box-shadow: none; }
+/* a setting's name with more to say on hover */
+.hint { cursor: help; text-decoration: underline dotted var(--line-2); text-underline-offset: 3px; }
+/* the options' widths follow their labels, each reserving its bold width and its seal so a pick
+   doesn't shift them */
+.seg button[data-label]::after { content: attr(data-label); display: block; height: 0; overflow: hidden; visibility: hidden; font-weight: 700; padding-left: 11px; }
+
+/* -- switch: an on/off setting. A square knob in an inked well; on, it becomes a red seal. Some
+   segments on and some off: the knob waits in the middle. */
+.switch {
+  position: relative; flex: none; width: 38px; height: 20px; padding: 0; border: 0; border-radius: var(--r-sm);
+  background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--line-2), inset 0 1px 3px rgb(0 0 0 / 0.45);
+}
+.switch::after {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 2px; background: var(--muted);
+  transition: translate var(--dur-3) var(--ease-std), rotate var(--dur-3) var(--ease-std), background-color var(--dur-2), box-shadow var(--dur-2);
+}
+.switch[aria-checked="true"] { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, var(--line-2)), inset 0 1px 3px rgb(0 0 0 / 0.45); }
+.switch[aria-checked="true"]::after { translate: 18px 0; rotate: -6deg; background: var(--accent); box-shadow: 0 0 0 2px var(--key-bg); }
+.switch[aria-checked="mixed"]::after { translate: 9px 0; background: var(--faint); }
+.switch:hover:not(:disabled)::after { background: var(--fg); }
+.switch[aria-checked="true"]:hover:not(:disabled)::after { background: var(--accent-hover); }
+.switch-box { display: flex; justify-content: flex-end; }
+
+/* -- slider: an ink rule, red as far as it's set (main.js keeps --v), and a seal for a knob */
+input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 18px; padding: 0; margin: 0; background: transparent; border: 0; --v: 50%; }
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px; border-radius: 1px;
+  background: linear-gradient(var(--accent), var(--accent)) left center / var(--v) 4px no-repeat, linear-gradient(var(--line-2), var(--line-2)) center / 100% 2px no-repeat;
+}
+input[type="range"]::-moz-range-track { height: 2px; background: var(--line-2); }
+input[type="range"]::-moz-range-progress { height: 4px; background: var(--accent); }
+/* a slider that goes both ways: red from its middle to the knob */
+input[type="range"].centered::-webkit-slider-runnable-track {
+  background: linear-gradient(to right, transparent min(var(--v), 50%), var(--accent) min(var(--v), 50%), var(--accent) max(var(--v), 50%), transparent max(var(--v), 50%)) center / 100% 4px no-repeat, linear-gradient(var(--line-2), var(--line-2)) center / 100% 2px no-repeat;
+}
+input[type="range"].centered::-moz-range-progress { background: none; }
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5px; border-radius: 2px; background: var(--accent); border: 2px solid var(--key-bg);
+  box-shadow: 0 1px 0 var(--accent-edge); transform: rotate(-6deg); transition: transform var(--dur-1) var(--ease-std);
+}
+input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 2px; background: var(--accent); border: 2px solid var(--key-bg); }
+input[type="range"]:hover:not(:disabled)::-webkit-slider-thumb, input[type="range"]:active::-webkit-slider-thumb { transform: rotate(-6deg) scale(1.15); }
+input[type="range"]:focus-visible { outline: none; }
+input[type="range"]:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* -- floating paper: the bars and notes over the media are paper (ink in the light theme), opaque,
+   lifted on an edge. Their buttons are quiet ink. */
+.pill, .sel-bar, .result, .render-badge, .error-card, .lost-card {
+  background: var(--float-bg); color: var(--float-fg); border: 0; box-shadow: 0 var(--edge-sm) 0 var(--float-edge), var(--e2);
+}
+:is(.pill, .sel-bar, .result, .lost-card) :is(.tbtn, button.x, .icon-btn) { color: var(--float-fg); }
+:is(.pill, .sel-bar, .result, .lost-card) :is(.tbtn, button.x, .icon-btn):hover:not(:disabled) { background: var(--float-hover); box-shadow: none; color: var(--float-fg); }
+:is(.pill, .sel-bar, .result, .lost-card) :is(.tbtn, button.x, .icon-btn):active:not(:disabled) { background: var(--float-press); box-shadow: none; }
+:is(.result, .lost-card) .ghost { color: var(--float-fg); border-color: var(--float-line); box-shadow: 0 var(--edge-sm) 0 var(--float-line); }
+:is(.result, .lost-card) .ghost:hover:not(:disabled) { background: var(--float-hover); }
+
+/* -- spinner: one ring, any size */
+.spinner, .spin, .char.making .ph::after {
+  --sz: 16px; width: var(--sz); height: var(--sz); flex: none; border-radius: 50%;
+  border: max(1.5px, calc(var(--sz) / 12)) solid var(--line-2); border-top-color: var(--fg);
+  animation: spin 0.8s linear infinite;
+}
+.spin { --sz: 10px; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* -- progress bar: an inked well filling with red */
+.bar-progress { width: 100%; max-width: 420px; height: 6px; border-radius: 2px; background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--line-2); overflow: hidden; padding: 1px; }
+.bar-progress > div { height: 100%; width: 0; border-radius: 1px; background: var(--accent); transition: width var(--dur-3) var(--ease-std); }
+
+/* -- a success mark (the check draws itself in) */
+.ok-mark { width: 32px; height: 32px; flex: none; display: grid; place-items: center; border-radius: 50%; color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
+.ok-mark svg { width: var(--ico-md); height: var(--ico-md); stroke-width: 2.2; stroke-dasharray: 24; stroke-dashoffset: 0; animation: draw var(--dur-4) var(--ease-out) var(--dur-2) backwards; }
+@keyframes draw { from { stroke-dashoffset: 24; } }
+
+/* -- keys */
+kbd {
+  flex: none; padding: 1px var(--s6); border: 1px solid var(--line-2); border-bottom-width: 2px; border-radius: var(--r-xs);
+  font: 500 var(--fs-caption)/1.5 var(--font-mono); color: var(--fg); background: var(--panel); white-space: nowrap;
+}
+
+/* -- drop zones: dashed ink, a click chooses; a drag over them strengthens the edge */
+.open-drop, .src-start, .ps-new, .char.new {
+  border: 1px dashed var(--line-2); transition: border-color var(--dur-2), background-color var(--dur-2), color var(--dur-2);
+}
+.open-drop:hover, .work.over .open-drop, .src-start:hover, .src-start.over, .ps-new:hover, .tl.over .ps-new, .char.new:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--fg) 40%, transparent); background-color: var(--hover);
+}
+.choose { pointer-events: none; }
+.open-drop:hover .choose, .src-start:hover .choose { background: var(--hover); }
+
+/* ------------------------------------------------------------------ 4. layout: floating panels on a grid
+   landscape: canvas top-left, timeline under it, settings in a full-height right column.
+   vertical (.portrait): the canvas fills the left side, settings above the timeline on the right.
+   The 8px gaps are grid cells and double as the resize handles (layout.js). */
+.app {
+  position: absolute; inset: 0; display: grid; padding: var(--gut);
+  grid-template-columns: minmax(0, 1fr) var(--gut) var(--sw);
+  grid-template-rows: minmax(0, 1fr) var(--gut) var(--th);
+}
+.panel {
+  position: relative; min-width: 0; min-height: 0; overflow: hidden;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--e1);
+}
+.work { grid-column: 1; grid-row: 1; background: var(--bg-2); container-type: size; }
+.tl { grid-column: 1; grid-row: 3; container: tl / inline-size; }
+.set { grid-column: 3; grid-row: 1 / -1; display: flex; flex-direction: column; container-type: inline-size; }
+.app.portrait .work { grid-row: 1 / -1; }
+.app.portrait .set { grid-row: 1; }
+.app.portrait .tl { grid-column: 3; }
+.app.portrait .split.y { grid-column: 3; }
+
+.split { position: relative; z-index: 10; touch-action: none; }
+.split::after {
+  content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  border-radius: var(--r-full); background: var(--line-2); transition: background-color var(--dur-2), width var(--dur-2) var(--ease-std), height var(--dur-2) var(--ease-std);
+}
+.split:hover::after, .split.active::after { background: var(--muted); }
+.split.x { grid-column: 2; grid-row: 1 / -1; cursor: col-resize; }
+.split.x::after { width: 3px; height: 40px; }
+.split.x:hover::after, .split.x.active::after { height: 56px; }
+.split.y { grid-column: 1; grid-row: 2; cursor: row-resize; }
+.split.y::after { width: 40px; height: 3px; }
+.split.y:hover::after, .split.y.active::after { width: 56px; }
+
+/* until there's a photo or video, there's no timeline: the canvas takes its height */
+.app.no-media > .tl, .app.no-media > .split.y { display: none; }
+@media (min-width: 701px) { .app.no-media > .work, .app.no-media > .set { grid-row: 1 / -1; } }
+
+@media (max-width: 700px) {
+  body { overflow: auto; }
+  .app, .app.portrait { position: static; min-height: 100dvh; grid-template-columns: minmax(0, 1fr); grid-template-rows: 60dvh auto auto; gap: var(--gut); }
+  .app .work, .app .tl, .app .set, .app.portrait .work, .app.portrait .tl, .app.portrait .set { grid-column: 1; grid-row: auto; }
+  .app .tl { min-height: 160px; }
+  .split { display: none; }
+}
+
+/* ------------------------------------------------------------------ 4. canvas */
+.canvas-box { position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden; }
+/* the media fills the working area (object-fit keeps its aspect ratio); viewport.js zooms and pans it */
+#view, #player {
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: contain; background: transparent;
+  transform: translate(var(--zx, 0), var(--zy, 0)) scale(var(--z, 1)); transform-origin: center;
+}
+.canvas-box.pixels #view, .canvas-box.pixels #player { image-rendering: pixelated; }
+/* the selected segments' face boxes, in box pixels (main.js drawMarks): the same width at any zoom,
+   each with a seal on its corner */
+.marks { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.marks rect { fill: none; stroke: var(--fc); stroke-width: 2; shape-rendering: crispEdges; filter: drop-shadow(0 0 1px rgb(0 0 0 / 0.7)); }
+.marks rect.corner { fill: var(--accent); stroke: none; filter: none; shape-rendering: auto; }
+.canvas-box.zoomed { cursor: grab; }
+.canvas-box.panning { cursor: grabbing; }
+.panel-center {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--s12); padding: var(--s48) var(--s32); text-align: center; overflow-y: auto;
+}
+.panel-center h2 { margin: 0; font: 700 var(--fs-heading)/1.2 var(--font-display); letter-spacing: -0.02em; }
+.panel-center .choose { margin-top: var(--s8); }
+.empty-art { width: 112px; height: 88px; margin-bottom: var(--s4); }
+.empty-art > svg { width: 100%; height: 100%; overflow: visible; }
+.empty-art .frame { fill: var(--panel); stroke: var(--line-2); stroke-width: 1.5; }
+.empty-art .mark { color: var(--line-2); --mark-paper: var(--panel); }
+/* with nothing to change yet, the working area is its drop zone; a click chooses a file */
+.open-drop { inset: var(--s12); cursor: pointer; border-radius: var(--r-md); }
+
+/* what the last export made: a paper note in the top-right corner, until closed or the next export */
+.result {
+  position: absolute; z-index: 6; right: var(--s12); top: var(--s12); max-width: calc(100% - 24px); display: flex; align-items: center; gap: var(--s8);
+  padding: var(--s4) var(--s4) var(--s4) var(--s8); border-radius: var(--r-md);
+}
+.result .ok-mark { width: var(--h-sm); height: var(--h-sm); color: var(--float-good); background: color-mix(in srgb, var(--float-good) 16%, transparent); }
+.result .ok-mark svg { width: var(--ico-xs); height: var(--ico-xs); }
+.result .ghost.sm { flex: none; }
+/* the note offering a reset: top left, clear of the export's in the top right */
+.result.resumed { right: auto; left: var(--s12); padding-left: var(--s12); }
+.result button.x { width: var(--h-sm); height: var(--h-sm); }
+.meta { min-width: 0; flex: 0 1 auto; font-size: var(--fs-small); color: var(--float-muted); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.meta b { font-weight: 700; color: var(--float-fg); }
+.meta .sep { color: var(--float-line); margin: 0 var(--s6); }
+
+/* the floating tool pill (bottom centre) */
+.pill {
+  position: absolute; z-index: 5; left: 50%; bottom: var(--s12); transform: translateX(-50%);
+  display: flex; gap: var(--s2); padding: 3px; border-radius: var(--r-md);
+}
+.pill button {
+  display: inline-flex; align-items: center; gap: var(--s6); height: var(--h-ctl); padding: 0 var(--s8); border: 0; border-radius: var(--r-sm);
+  background: transparent; color: var(--float-fg); font-size: var(--fs-small); font-weight: 600; white-space: nowrap;
+  transition: background-color var(--dur-1), translate var(--dur-1) var(--ease-std);
+}
+.pill button:hover:not(:disabled) { background: var(--float-hover); }
+.pill button:active:not(:disabled) { translate: 0 1px; transition-duration: 0s; }
+.pill button[aria-pressed="true"] { background: var(--float-press); }
+.pill svg { width: var(--ico-md); height: var(--ico-md); }
+.pill .sq { width: var(--h-ctl); padding: 0; justify-content: center; }
+.pill button:disabled { opacity: 0.35; }
+.pill .sep { width: 1px; margin: var(--s6) var(--s2); background: var(--float-line); }
+.pill #compareBtn[hidden] + .sep { display: none; }
+.zoom-level { min-width: 48px; align-self: center; text-align: center; font: 500 var(--fs-caption) var(--font-mono); color: var(--float-muted); }
+
+.error-card {
+  position: absolute; z-index: 6; left: 50%; top: var(--s48); transform: translateX(-50%); max-width: calc(100% - 40px);
+  display: flex; align-items: center; gap: var(--s8); padding: var(--s8) var(--s12); border-radius: var(--r-md);
+  color: var(--float-bad); font-size: var(--fs-small); font-weight: 600;
+}
+.error-card::before { content: ""; flex: none; width: 8px; height: 8px; background: var(--accent); rotate: -6deg; }
+/* the frame on screen isn't swapped yet (the preview is making it); under the result, if any */
+.render-badge {
+  position: absolute; z-index: 5; right: var(--s12); top: var(--s12); display: flex; align-items: center; gap: var(--s6);
+  height: var(--h-sm); padding: 0 var(--s12) 0 var(--s8); border-radius: var(--r-sm); font-size: var(--fs-caption); font-weight: 600; color: var(--float-muted); pointer-events: none;
+}
+.render-badge .spin { border-color: var(--float-line); border-top-color: var(--float-fg); }
+.work:has(#result:not([hidden])) .render-badge { top: 56px; }
+.lost-card {
+  position: absolute; z-index: 6; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: min(420px, calc(100% - 40px));
+  display: flex; flex-direction: column; align-items: center; gap: var(--s12); padding: var(--s16) var(--s20); text-align: center;
+  border-radius: var(--r-md); font-size: var(--fs-body);
+}
+
+/* the swap lands in a puff of smoke (main.js poof): an inked cloud over the face, then gone */
+.poof { position: absolute; z-index: 4; pointer-events: none; width: 0; height: 0; animation: poof-fade 620ms var(--ease-out) both; }
+.poof i { position: absolute; left: 0; top: 0; border-radius: 50%; animation: poof-puff 620ms var(--ease-out) both; }
+.poof .ol, .poof .fl { position: absolute; left: 0; top: 0; }
+.poof .ol i { background: #16131a; }
+.poof .fl i { background: #fbf8f3; }
+@keyframes poof-fade { 0% { opacity: 0; } 12%, 46% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes poof-puff {
+  0% { transform: translate(var(--x), var(--y)) scale(0.2); }
+  34% { transform: translate(var(--x), var(--y)) scale(1); }
+  100% { transform: translate(calc(var(--x) * 1.6), calc(var(--y) * 1.6)) scale(1.18); }
+}
+
+/* ------------------------------------------------------------------ 4. setup
+   until the models are ready, the working area fills the window and shows only the download to
+   pick (the first visit) or its progress; the timeline and the settings come with the models */
+.app.setup { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+.app.setup > :not(.work) { display: none; }
+.app.setup .work { grid-column: 1; grid-row: 1; }
+.app.setup .work > :not(.canvas-box), .app.setup .canvas-box > :not(.setup-view, .error-card, .lost-card) { display: none; }
+.app.setup #view, .app.setup #player { display: none; } /* (their own rule sets display by id) */
+.app.setup .lost-card { top: var(--s24); transform: translateX(-50%); }
+.setup-view { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; padding: var(--s24); overflow-y: auto; }
+.setup-card { width: min(640px, 100%); display: flex; flex-direction: column; align-items: center; gap: var(--s16); text-align: center; }
+.setup-card .lead { font-size: var(--fs-title); line-height: 1.5; max-width: 500px; }
+/* the welcome: the mark, the line, what it promises, the one thing to do */
+.welcome-mark { width: 64px; height: 64px; --mark-paper: var(--bg-2); }
+.welcome-title { margin: var(--s4) 0 0; font: 800 var(--fs-display)/1.05 var(--font-display); letter-spacing: -0.035em; }
+.welcome-title em { font-style: normal; color: var(--accent); }
+.stickers { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s12) var(--s16); margin: var(--s4) 0 var(--s8); }
+.sticker {
+  display: inline-flex; align-items: center; gap: var(--s6); height: var(--h-ctl); padding: 0 var(--s12); border-radius: var(--r-full);
+  font: 700 var(--fs-small)/1 var(--font-display); letter-spacing: -0.01em; white-space: nowrap;
+  box-shadow: 0 0 0 3px var(--sticker-edge, #fbf8f3), 0 6px 14px rgb(0 0 0 / 0.35); transform: rotate(var(--tilt, 0deg));
+}
+.sticker svg { width: var(--ico-sm); height: var(--ico-sm); stroke-width: 2.2; }
+.sticker.ink { background: #1c191e; color: #f2ede6; }
+.sticker.paper { background: #f2ede6; color: #1c191e; }
+:root[data-theme="light"] .sticker { --sticker-edge: #ffffff; box-shadow: 0 0 0 3px #fff, 0 6px 14px rgb(60 45 30 / 0.18); }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .sticker { --sticker-edge: #ffffff; box-shadow: 0 0 0 3px #fff, 0 6px 14px rgb(60 45 30 / 0.18); } }
+.welcome-go { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--s12); }
+#welcomeNote { max-width: 520px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+/* what's missing from the models folder */
+.needs { width: min(520px, 100%); display: flex; flex-direction: column; gap: var(--s8); text-align: left; }
+.needs code, .help.path { font-family: var(--font-mono); font-size: var(--fs-caption); overflow-wrap: anywhere; }
+.needs-list { margin: 0; padding: var(--s4) var(--s12); list-style: none; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-2); font-size: var(--fs-caption); color: var(--fg); }
+.needs-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto 44px 64px; column-gap: var(--s8); align-items: center; padding: var(--s4) 0; }
+.needs-list li + li { border-top: 1px solid var(--line); }
+.need-what { font-size: var(--fs-small); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.need-tag { color: var(--faint); }
+.need-size { color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.need-state { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.need-get { padding: 0; border: 0; background: none; color: var(--fg); font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.need-get:hover:not(:disabled) { color: var(--accent); }
+.need-get:disabled { color: var(--faint); cursor: default; }
+.failed .need-get { color: var(--accent); }
+.need-file { font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; }
+/* without a link, the state is the file's name: it takes the tag's room too */
+.needs-list li:has(.need-file) { grid-template-columns: minmax(0, 1fr) auto 44px minmax(0, 1.4fr); }
+.needs-list li.failed .need-state { color: var(--accent); }
+.needs-saved { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* a short window: everything still fits */
+@media (max-height: 640px) {
+  .setup-view { padding: var(--s12) var(--s24); }
+  #welcome { gap: var(--s8); }
+  .welcome-mark { width: 40px; height: 40px; }
+  .welcome-title { --fs-display: 26px; margin: 0; }
+  .setup-card .lead { font-size: var(--fs-body); }
+  .stickers { margin: var(--s2) 0; }
+  .needs { gap: var(--s4); }
+  .needs-list li { padding: var(--s2) 0; }
+}
+@media (max-height: 520px) {
+  .welcome-mark, .stickers { display: none; }
+}
+#welcome .help { max-width: 480px; }
+#loading .spinner { --sz: 40px; }
+#loading h2 { margin: 0; font: 700 var(--fs-heading)/1.2 var(--font-display); letter-spacing: -0.02em; }
+#loading .help { font-size: var(--fs-body); font-variant-numeric: tabular-nums; }
+
+/* ------------------------------------------------------------------ 4. timeline: index cards in a well.
+   Header cells are cards, lanes are wells, both outlined in ink; the face segments (timeline.js)
+   are saturated stickers with an ink edge. */
+.tl-grid { position: absolute; inset: var(--s8); display: flex; flex-direction: column; gap: var(--rg); --t: 0; }
+.tl-row { display: flex; gap: var(--rg); min-height: 0; }
+.tl-head { flex: 0 0 36px; position: relative; }
+.tl-tracks { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: var(--rg); }
+.track { position: relative; flex: 0 0 36px; }
+.tl-h {
+  flex: 0 0 var(--hw); min-width: 0; display: flex; align-items: center; gap: var(--s6); padding: 0 var(--s8);
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-md); color: var(--muted); font-size: var(--fs-small); text-align: left; overflow: hidden;
+}
+/* the transport: letterpress keys in the well, each on its edge and sinking onto it when pressed;
+   Play is the paper key */
+.tl-h.transport { gap: var(--s2); padding: 0 var(--s4); background: var(--bg-2); }
+.tl-h.transport .tbtn {
+  width: var(--h-ctl); height: var(--h-ctl); margin-bottom: var(--edge-sm); border-radius: var(--r-sm); color: var(--fg);
+  box-shadow: inset 0 0 0 1px var(--line-2), 0 var(--edge-sm) 0 var(--line-2);
+}
+.tl-h.transport .tbtn svg { width: var(--ico-md); height: var(--ico-md); }
+.tl-h.transport .tbtn:hover:not(:disabled) { background: var(--hover); box-shadow: inset 0 0 0 1px var(--line-2), 0 var(--edge-sm) 0 var(--line-2); }
+.tl-h.transport .tbtn:active:not(:disabled) { translate: 0 var(--edge-sm); box-shadow: inset 0 0 0 1px var(--line-2); transition-duration: 0s; }
+.tl-h.transport #tlPlay, .tl-h.transport #tlPlay:hover:not(:disabled) { background: var(--key-bg); color: var(--key-fg); box-shadow: 0 var(--edge-sm) 0 var(--key-edge); }
+.tl-h.transport #tlPlay:active:not(:disabled) { box-shadow: none; }
+.tsep { flex: none; width: 1px; height: 16px; margin: 0 var(--s4); background: var(--line-2); }
+#tlStart svg path:last-child, .ico-play { fill: currentColor; }
+.tbtn .ico-pause, .tbtn.playing .ico-play { display: none; }
+.tbtn.playing .ico-pause { display: inline; }
+.tbtn .ico-spk { fill: currentColor; }
+.tbtn .ico-off, .tbtn.muted .ico-on { display: none; }
+.tbtn.muted .ico-off { display: inline; }
+/* Auto (working ahead in the background): in the accent while on */
+.tl-h.transport #tlAuto[aria-pressed="true"] { color: var(--accent); }
+.tl-time { flex: 1; min-width: 0; margin: 0 var(--s6); font-size: var(--fs-caption); font-weight: 500; font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tl-time span:first-child { color: var(--fg); font-weight: 600; }
+.tl-lane { flex: 1; min-width: 0; position: relative; background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--r-md); }
+/* a track's header: its name, dragged to move the track, and its face's colour as a bar at the end.
+   Hovered a stronger ink, some segments selected a paper hairline, all of them the paper outline */
+.track .tl-h { padding: 0 var(--s8) 0 0; gap: 0; touch-action: none; transition: background-color var(--dur-2), color var(--dur-2), border-color var(--dur-2); }
+.track .tl-h::after { content: ""; flex: none; width: 3px; align-self: stretch; margin: var(--s6) 0 var(--s6) var(--s6); border-radius: 2px; background: var(--fc); }
+.track .who { flex: 1; min-width: 0; height: 100%; display: flex; align-items: center; gap: var(--s8); padding: 0; border: 0; background: none; color: inherit; text-align: left; }
+.track .who:focus-visible { outline-offset: -2px; }
+.track .tl-h .nm { min-width: 0; color: var(--fg); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* the face, as on a photo's face chip */
+.track .who .fc { width: 24px; height: 24px; flex: none; border-radius: var(--r-xs); object-fit: cover; pointer-events: none; box-shadow: 0 0 0 1px var(--line-2); }
+.track .tl-h:hover { border-color: var(--line-2); }
+.track.some .tl-h { border-color: color-mix(in srgb, var(--ring) 45%, var(--line)); }
+.track.sel .tl-h { color: var(--fg); background: var(--panel-2); border-color: var(--ring); }
+/* the handle: faint dots, on hover (always without one) */
+.track .grip { flex: none; width: 16px; height: 100%; display: grid; place-items: center; color: var(--faint); opacity: 0; transition: opacity var(--dur-2); }
+.track .tl-h:hover .grip, .tl-tracks.moving .lifted .grip { opacity: 1; }
+@media (hover: none) { .track .grip { opacity: 0.6; } }
+.track .grip svg { width: 6px; height: 10px; fill: currentColor; stroke: none; }
+/* delete the track: on hover or keyboard focus, taking its room from the name (always without hover) */
+.track .del { flex: none; width: 0; overflow: hidden; opacity: 0; }
+.track .tl-h:hover .del, .track .del:focus-visible { width: var(--h-sm); opacity: 1; }
+@media (hover: none) { .track .del { width: var(--h-sm); opacity: 0.6; } }
+.tl-tracks.moving .del, .tl-tracks.locked .del { display: none; }
+.tl-tracks.moving, .tl-tracks.moving * { cursor: grabbing; }
+.tl-tracks.moving .lifted { opacity: 0.45; }
+/* where a dragged track goes: a line between rows, or the row it merges into (or can't) */
+.track.ins-before::before, .track.ins-after::after {
+  content: ""; position: absolute; z-index: 2; left: 0; right: 0; height: 2px; border-radius: 1px; background: var(--fg); pointer-events: none;
+}
+.track.ins-before::before { top: -3px; }
+.track.ins-after::after { bottom: -3px; }
+.track.merge-into .tl-h, .track.merge-into .tl-lane { box-shadow: inset 0 0 0 1.5px var(--fg); }
+.track.no-merge .tl-h, .track.no-merge .tl-lane { box-shadow: inset 0 0 0 1.5px var(--bad); }
+.track.drop-face .tl-h { box-shadow: inset 0 0 0 1.5px var(--muted); }
+/* one canvas over the lane column draws the rows' contents; the DOM lanes are its backdrop */
+.tl-canvas { position: absolute; top: 0; bottom: 0; left: calc(var(--hw) + var(--rg)); width: calc(100% - var(--hw) - var(--rg)); height: 100%; touch-action: none; }
+.tl-over { flex: 0 0 12px; }
+.tl-over .tl-h, .tl-over .tl-lane { background: transparent; border-color: transparent; }
+/* the clip: the video on the timeline */
+.clip-row { flex: 0 0 44px; }
+.clip-row .tl-h { padding: 0 var(--s2) 0 var(--s8); gap: var(--s4); }
+.clip-row .nm-box { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.clip-row .nm { min-width: 0; color: var(--fg); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.clip-row .nm:hover { text-decoration: underline; text-underline-offset: 2px; }
+.clip-row .tbtn { color: var(--muted); }
+.scan-note { display: flex; align-items: center; gap: var(--s6); min-width: 0; font-size: var(--fs-caption); color: var(--faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* with no video on the timeline: the models' readiness, or the photo's card */
+.tl-empty { position: absolute; inset: var(--s8); display: grid; place-items: center; overflow-y: auto; }
+.tl-state { display: flex; align-items: center; gap: var(--s12); width: min(560px, 100%); padding: var(--s12); }
+.tl-state-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--s4); }
+.tl-state-text b { font: 700 var(--fs-title)/1.2 var(--font-display); letter-spacing: -0.01em; }
+.tl-state .bar-progress { max-width: none; }
+/* what can be done to the selection: a paper bar floating just above it (main.js places it), only
+   while there's one, with only the actions that apply */
+.sel-bar { position: absolute; z-index: 6; display: flex; align-items: center; gap: var(--s2); padding: 3px; border-radius: var(--r-md); }
+.sel-bar .lab { padding: 0 var(--s8) 0 var(--s6); font-size: var(--fs-caption); font-weight: 600; color: var(--float-muted); white-space: nowrap; }
+.sel-bar .tbtn { width: var(--h-ctl); height: var(--h-ctl); }
+
+/* photos: the video timeline's rows. The top row as a video's (previous / next where the transport
+   is); the media row takes the height left, its photos as tall as the lane, each in its own shape;
+   the faces' row is a fixed strip of chips under it. Selected: the paper outline (the selected
+   photos, the selected faces) with a seal; the other photos are a little dimmer. The selection's
+   actions are in the bar over it (.sel-bar), as a video's. */
+.tl:has(#photoSet:not([hidden])) .tl-empty { display: none; }
+.photo-set { position: absolute; inset: var(--s8); display: flex; flex-direction: column; gap: var(--rg); }
+.ps-info { position: absolute; inset: 0; display: flex; align-items: center; padding: 0 var(--s12); font-size: var(--fs-caption); color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ps-film { flex: 1 1 auto; min-height: 60px; }
+.ps-faces { flex: 0 0 56px; }
+.ps-film .ps-h { padding: 0 var(--s2) 0 var(--s8); gap: var(--s4); }
+.ps-film .nm { flex: 1; min-width: 0; color: var(--fg); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ps-film .nm small { display: block; color: var(--faint); font-size: var(--fs-caption); font-weight: 400; }
+.ps-film .tbtn { color: var(--muted); cursor: pointer; }
+.ps-film .tbtn:hover { color: var(--fg); }
+.ps-faces .ps-h { gap: var(--s8); }
+.ps-h b { font-weight: 600; color: var(--fg); white-space: nowrap; }
+.ps-h small { font-size: var(--fs-caption); color: var(--faint); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#psPrev:disabled, #psNext:disabled { opacity: 0.35; cursor: default; }
+.ps-lane { display: flex; align-items: stretch; gap: var(--s6); padding: var(--s6); overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; }
+/* a photo: its thumbnail at the lane's height */
+.ps-card { position: relative; flex: none; height: 100%; }
+.ps-pick {
+  height: 100%; display: block; position: relative; padding: 0; border: 0; border-radius: var(--r-sm); overflow: hidden;
+  background: var(--panel); box-shadow: 0 0 0 1px var(--line); transition: box-shadow var(--dur-2);
+}
+.ps-pick > img { height: 100%; width: 100%; display: block; object-fit: contain; pointer-events: none; opacity: 0.6; transition: opacity var(--dur-2); }
+.ps-pick:hover > img, .ps-pick[aria-selected="true"] > img, .ps-pick.open > img { opacity: 1; }
+.ps-pick[aria-selected="true"] { box-shadow: 0 0 0 2px var(--ring); }
+.ps-pick[aria-selected="true"]::before { content: ""; position: absolute; z-index: 1; left: 0; top: 0; width: 8px; height: 8px; background: var(--accent); }
+.ps-pick:disabled { cursor: default; }
+/* the characters its faces become, overlapping in its corner */
+.ps-pick .tos { position: absolute; right: var(--s4); bottom: var(--s4); display: flex; flex-direction: row-reverse; }
+.ps-pick .to { width: 18px; height: 24px; object-fit: cover; border-radius: var(--r-xs); box-shadow: 0 0 0 1.5px var(--bg-2); }
+.ps-pick .to + .to { margin-right: -7px; }
+/* a card's remove button: over its corner, on hover */
+.ps-card button.x, .char button.x { position: absolute; z-index: 2; top: var(--s4); right: var(--s4); display: none; background: var(--float-bg); color: var(--float-fg); box-shadow: 0 1px 0 var(--float-edge); }
+.ps-card button.x:hover, .char button.x:hover { background: var(--float-bg); color: var(--accent); box-shadow: 0 1px 0 var(--float-edge); }
+.ps-card:hover button.x:not([hidden]), .ps-card button.x:focus-visible, .char:hover button.x:not([hidden]), .char button.x:focus-visible { display: grid; }
+.ps-new {
+  flex: none; height: 100%; aspect-ratio: 3 / 4; max-width: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s2);
+  border-radius: var(--r-sm); color: var(--muted); font-size: var(--fs-caption); cursor: pointer;
+}
+.ps-new svg { width: var(--ico-lg); height: var(--ico-lg); }
+.ps-new:hover, .tl.over .ps-new { color: var(--fg); }
+/* a face: its picture, its name and what it becomes, and that character's picture */
+.face-card {
+  flex: none; height: 100%; display: flex; align-items: center; gap: var(--s8); padding: 3px; max-width: 220px;
+  border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--panel); color: var(--muted); text-align: left;
+  transition: border-color var(--dur-2), box-shadow var(--dur-2);
+}
+.face-card .av { height: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--r-xs); display: block; pointer-events: none; }
+/* which photo a face is in, with several selected */
+.face-card .fwrap { position: relative; height: 100%; flex: none; }
+.face-card .pn {
+  position: absolute; left: 2px; bottom: 2px; min-width: 14px; height: 14px; padding: 0 3px; border-radius: 2px; display: grid; place-items: center;
+  font-size: var(--fs-micro); font-weight: 700; color: var(--float-fg); background: var(--float-bg);
+}
+.face-card .to { height: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--r-xs); display: block; pointer-events: none; }
+.face-card .txt { min-width: 0; display: flex; flex-direction: column; padding-right: var(--s6); }
+.face-card .nm { font-size: var(--fs-small); font-weight: 600; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.face-card .as { font-size: var(--fs-caption); color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.face-card:hover { border-color: var(--line-2); }
+.face-card[aria-pressed="true"] { border-color: var(--ring); box-shadow: 0 0 0 1px var(--ring); }
+.face-card[aria-pressed="mixed"] { border-color: var(--muted); }
+.face-card.drop-face { border-color: var(--fg); border-style: dashed; }
+.ps-empty { align-self: center; padding: 0 var(--s6); font-size: var(--fs-small); color: var(--faint); white-space: nowrap; }
+/* a drop on a video replaces it; the viewport takes a drop too */
+.tl.over:not(:has(#tlGrid[hidden]))::after, .tl.over:has(#photoSet:not([hidden]))::after, .work.over:not(:has(#empty:not([hidden])))::after {
+  content: "Drop to replace"; position: absolute; inset: var(--s8); z-index: 20; display: grid; place-items: center; pointer-events: none;
+  border: 1px dashed color-mix(in srgb, var(--fg) 50%, transparent); border-radius: var(--r-md); background: color-mix(in srgb, var(--panel) 88%, transparent);
+  color: var(--fg); font: 700 var(--fs-heading)/1.2 var(--font-display); letter-spacing: -0.02em; text-align: center; padding: var(--s24);
+}
+/* (an empty canvas is its own drop zone, so it gets no overlay) */
+.work.over:not(:has(#empty:not([hidden])))::after { content: "Drop to open"; }
+.work.over:has(#view:not([hidden]), #player:not([hidden]))::after { content: "Drop to replace"; }
+.tl.over:has(#photoSet:not([hidden]))::after, .work.over:has(#view:not([hidden]))::after { content: "Drop photos to add them, or a video to open it"; }
+/* saving every photo (they're opened in turn) or exporting a video: nothing else can change
+   meanwhile, so the editor can't be clicked or selected; the timeline's playhead still shows how
+   far a video's export is */
+.app:is(.saving, .exporting) :is(.steps, .tl, .project .undo, #settingsBtn, #resumed, #compareBtn) { pointer-events: none; user-select: none; opacity: 0.6; transition: opacity var(--dur-2); }
+.app.exporting .tl { opacity: 0.85; }
+
+/* ------------------------------------------------------------------ 4. settings: header, cards
+   the header: the mark and the wordmark, then undo / redo, Export and the settings panel's button.
+   layout.js keeps the column wide enough for all of them, with room to spare between. */
+.project { flex: 0 0 auto; display: flex; align-items: center; gap: var(--s4); height: 52px; padding: 0 var(--s8) 0 var(--s12); border-bottom: 1px solid var(--line); }
+.project .logo { display: grid; width: 24px; height: 24px; margin-right: var(--s4); }
+.project .logo svg { width: 100%; height: 100%; }
+.project .name { flex: none; }
+.project .undo { display: flex; gap: var(--s2); flex: none; margin-left: auto; margin-right: var(--s4); }
+.project > :not(.name) { flex: none; }
+#settingsBtn[aria-expanded="true"] { color: var(--fg); background: var(--press); box-shadow: inset 0 0 0 1px var(--line-2); }
+
+/* Export: the red stamp; its badge is a paper tag with what it makes; while it runs, a well filling
+   with red stripes, and Stop */
+.xbtn { position: relative; overflow: hidden; gap: var(--s6); min-width: 124px; height: var(--h-md); padding: 0 var(--s6) 0 var(--s12); font-size: var(--fs-body); }
+.xbtn svg { width: var(--ico-md); height: var(--ico-md); stroke-width: 2; }
+.xbtn .badge { padding: 1px var(--s6); border-radius: var(--r-xs); font: 600 var(--fs-micro)/1.4 var(--font-mono); background: var(--key-bg); color: var(--key-fg); }
+.xbtn .badge:empty { display: none; }
+.xbtn:has(.badge:empty) { padding-right: var(--s12); }
+/* can't run yet (its tooltip says why): an inked outline rather than a faded fill */
+.xbtn:disabled { opacity: 1; background: var(--bg-2); color: var(--faint); box-shadow: inset 0 0 0 1px var(--line), 0 var(--edge) 0 var(--line); }
+.xbtn:disabled .badge { background: var(--line); color: var(--faint); }
+.xbtn.run {
+  overflow: hidden; justify-content: flex-start; padding: 0 var(--s4) 0 var(--s12); background: var(--bg-2); color: var(--fg);
+  box-shadow: inset 0 0 0 1px var(--line-2), 0 var(--edge) 0 var(--line-2);
+}
+.xbtn.run:hover { background: var(--bg-2); }
+.xbtn.run::before {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: var(--p, 0%); transition: width var(--dur-3) var(--ease-std);
+  background: repeating-linear-gradient(-45deg, color-mix(in srgb, var(--accent) 60%, transparent) 0 6px, color-mix(in srgb, var(--accent) 40%, transparent) 6px 12px);
+}
+.xbtn.run > * { position: relative; z-index: 1; }
+.xbtn.run .t { flex: 1; font: 500 var(--fs-small) var(--font-mono); letter-spacing: -0.02em; }
+.xbtn button.x { width: 22px; height: 22px; border-radius: var(--r-xs); background: var(--key-bg); color: var(--accent); box-shadow: 0 1px 0 var(--key-edge); }
+.xbtn button.x:hover:not(:disabled) { background: var(--key-bg); color: var(--accent-hover); box-shadow: 0 1px 0 var(--key-edge); }
+.xbtn button.x svg { width: var(--ico-xs); height: var(--ico-xs); }
+
+/* with no character yet, the first part of the settings is the images' drop zone; a click chooses them */
+.faces-part:has(> .src-start:not([hidden])) { flex: 1; }
+.src-start {
+  flex: 1; min-height: 220px; margin: var(--s12); display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--s12); padding: var(--s32) var(--s24); text-align: center; cursor: pointer; border-radius: var(--r-md);
+}
+.src-start .empty-art .person { fill: none; stroke: var(--line-2); stroke-width: 1.5; stroke-linecap: round; }
+.src-start b { font: 700 var(--fs-heading)/1.2 var(--font-display); letter-spacing: -0.02em; text-wrap: balance; }
+.src-start .help { max-width: 260px; }
+.src-start .choose { margin-top: var(--s8); }
+
+/* the characters, then the settings of the selected segments as numbered cards, in one column that
+   scrolls. The output is in the settings panel (.set-pop). layout.js keeps the column 300–600 px
+   wide (wider if the header needs it), so the controls never need a stacked or shortened form. */
+.steps { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; }
+.part { flex: none; display: flex; flex-direction: column; }
+.part-body { display: flex; flex-direction: column; gap: var(--s8); padding: var(--s8) var(--s12) var(--s12); }
+.part-body[hidden] { display: none; }
+/* a card: the characters, and each step; its head ruled off like an index card's title */
+.chars, .step { position: relative; flex: none; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-md); }
+.step-head {
+  width: 100%; display: flex; align-items: center; gap: var(--s8); height: var(--h-md); padding: 0 var(--s12); border: 0; border-radius: var(--r-md); background: none; text-align: left;
+}
+.step:not(.folded) .step-head { border-bottom: 1px dashed var(--line); border-radius: var(--r-md) var(--r-md) 0 0; }
+.step-title { display: flex; align-items: center; gap: var(--s8); white-space: nowrap; transition: color var(--dur-1); }
+.step-sum { flex: 1; min-width: 0; text-align: right; font-size: var(--fs-caption); color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.step-head::after {
+  content: ""; flex: none; width: 6px; height: 6px; margin: 0 var(--s2) 3px var(--s2);
+  border-right: 1.5px solid var(--faint); border-bottom: 1.5px solid var(--faint); transform: rotate(45deg);
+  transition: transform var(--dur-3) var(--ease-std), margin-bottom var(--dur-3) var(--ease-std);
+}
+.step.folded .step-head::after { transform: rotate(-45deg); margin-bottom: 0; }
+/* a card's model button (load / unload) sits in its head, between the summary and the chevron */
+.step-load { position: absolute; top: var(--s4); right: 26px; color: var(--muted); }
+.step-load:disabled { opacity: 0.35; cursor: default; }
+.step:has(> .step-load:not([hidden])) .step-head::after { margin-left: 30px; }
+.step-sum.failed { color: var(--bad); }
+.step-head:hover .step-sum { color: var(--muted); }
+/* the body folds: its height eases to nothing, and what's in it can't be reached meanwhile */
+.step-body {
+  display: flex; flex-direction: column; gap: var(--s8); padding: var(--s8) var(--s12) var(--s12); overflow: clip;
+  transition: height var(--dur-3) var(--ease-std), padding var(--dur-3) var(--ease-std), opacity var(--dur-2), visibility var(--dur-3) allow-discrete;
+}
+.step.folded .step-body { height: 0; padding-top: 0; padding-bottom: 0; opacity: 0; visibility: hidden; }
+.out-rows { display: flex; flex-direction: column; gap: var(--s8); }
+
+.drop {
+  position: relative; display: grid; place-items: center; height: 150px; border-radius: var(--r-md); overflow: hidden;
+  border: 1px dashed var(--line-2); background: var(--panel); cursor: pointer; transition: border-color var(--dur-2), background-color var(--dur-2);
+}
+.drop:hover, .drop.over { border-color: color-mix(in srgb, var(--fg) 40%, transparent); background: var(--panel-2); }
+.drop.filled { border-style: solid; border-color: var(--line); }
+.drop-empty { display: flex; flex-direction: column; align-items: center; gap: var(--s6); padding: var(--s8); text-align: center; font-size: var(--fs-caption); color: var(--muted); }
+.drop-empty svg { width: var(--ico-lg); height: var(--ico-lg); color: var(--muted); flex: none; }
+.drop-empty u { color: var(--fg); }
+.drop canvas { position: absolute; inset: 0; margin: auto; display: block; max-width: 100%; max-height: 100%; cursor: pointer; }
+
+/* a setting: its name, its control, its value. An on/off one: its name, what on does, the switch */
+.opt-row { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: var(--s8); min-height: var(--h-ctl); font-size: var(--fs-small); color: var(--muted); }
+.opt-row .seg { grid-column: 2 / -1; }
+.opt-row output { font: 500 var(--fs-caption) var(--font-mono); color: var(--fg); min-width: 36px; text-align: right; }
+.opt-row .sw-cap { min-width: 0; font-size: var(--fs-caption); color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* the characters: a row of fixed-size cards that scrolls sideways (a wheel too, main.js), ending
+   with New; images dropped anywhere on it make a character */
+.chars { display: flex; flex-direction: column; gap: var(--s8); padding: 0 var(--s12) var(--s12); transition: border-color var(--dur-2); }
+.chars.over { border-color: color-mix(in srgb, var(--fg) 50%, transparent); border-style: dashed; }
+.chars-head { display: flex; align-items: center; gap: var(--s8); height: var(--h-md); margin: 0 calc(-1 * var(--s12)); padding: 0 var(--s12); border-bottom: 1px dashed var(--line); }
+.char-grid { --cw: 84px; display: grid; grid-template-columns: repeat(var(--cols, 1), var(--cw)); gap: var(--s8); padding: var(--s4); margin: 0 calc(-1 * var(--s4)) calc(-1 * var(--s4)); overflow-x: auto; overscroll-behavior-x: contain; }
+/* a character card: its face (3:4), then its name. Chosen: the paper outline and a red ✓ seal */
+.char { position: relative; min-width: 0; }
+.char .pick, .char.new {
+  position: relative; width: 100%; display: flex; flex-direction: column; padding: 0; overflow: hidden; text-align: left;
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-2); color: var(--muted);
+  transition: border-color var(--dur-2), box-shadow var(--dur-2);
+}
+.char.new { border-style: dashed; border-color: var(--line-2); background: transparent; }
+.char[draggable="true"] .pick { cursor: grab; }
+.char img, .char .ph { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: block; pointer-events: none; background: var(--panel-2); }
+.char .ph { display: grid; place-items: center; color: var(--faint); }
+.char .ph svg { width: var(--ico-lg); height: var(--ico-lg); }
+.char .nm { padding: var(--s6) var(--s8); font-size: var(--fs-caption); font-weight: 600; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.char.new .nm { color: var(--muted); }
+/* images being read into a character */
+.char.making { pointer-events: none; }
+.char.making .ph::after { content: ""; --sz: 18px; }
+.char.new .ph { background: none; }
+.char.new:hover:not(:disabled) .ph, .char.new:hover:not(:disabled) .nm { color: var(--fg); }
+.char .pick:hover:not(:disabled) { border-color: var(--line-2); }
+.char .pick[aria-checked="true"] { border-color: var(--ring); box-shadow: 0 0 0 1px var(--ring); }
+.char .pick[aria-checked="true"]::after {
+  content: "\2713"; position: absolute; top: var(--s4); left: var(--s4); width: 16px; height: 16px; display: grid; place-items: center;
+  font: 700 10px/1 var(--font-ui); color: var(--accent-ink); background: var(--accent); border-radius: 2px; rotate: -6deg; box-shadow: 0 1px 0 var(--accent-edge);
+}
+
+/* what the settings change: the first card of the column, scrolling with the rest. Its edge is the
+   faces' colour, as on their tracks and their boxes on the canvas; with a selection it takes the
+   paper outline the selection has on the timeline. */
+.scope {
+  position: relative; flex: none; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--s12);
+  min-height: 60px; padding: var(--s8) var(--s8) var(--s8) var(--s16); overflow: hidden;
+  background: var(--panel); border: 1px solid var(--line-2); border-radius: var(--r-md);
+  box-shadow: 0 var(--edge-sm) 0 var(--line);
+  transition: border-color var(--dur-2), box-shadow var(--dur-2);
+}
+.scope::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--sc, var(--line-2)); }
+.scope.on { border-color: var(--ring); box-shadow: 0 0 0 1px var(--ring), 0 var(--edge-sm) 0 var(--line); }
+.scope-who { position: relative; flex: none; width: 36px; height: 36px; }
+.scope-who img { width: 36px; height: 36px; flex: none; border-radius: var(--r-sm); object-fit: cover; box-shadow: 0 0 0 2px var(--panel), 0 0 0 3px var(--line-2); }
+.scope-who img { display: block; transition: opacity var(--dur-2); }
+/* how many more faces: a paper tag on the corner */
+.scope-who .more {
+  position: absolute; right: -6px; bottom: -5px; min-width: 18px; height: 16px; padding: 0 4px; display: grid; place-items: center; border-radius: var(--r-xs);
+  font: 700 var(--fs-micro)/1 var(--font-ui); color: var(--key-fg); background: var(--key-bg); box-shadow: 0 1px 0 var(--key-edge), 0 0 0 2px var(--panel);
+}
+.scope-who.held img { opacity: 0.4; }
+.scope-who .ph { width: 36px; height: 36px; display: grid; place-items: center; border-radius: var(--r-sm); color: var(--faint); background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--line-2); }
+.scope-who .ph .spin { --sz: 14px; }
+.scope-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.scope-over { font: 700 var(--fs-micro)/1.2 var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+.scope-text b { font: 700 var(--fs-title)/1.25 var(--font-display); letter-spacing: -0.01em; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scope-text small { font-size: var(--fs-caption); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scope-text small .num { color: var(--fg); font-size: var(--fs-micro); }
+.scope .scope-all { align-self: start; width: var(--h-ctl); height: var(--h-ctl); }
+
+/* the field a name is changed in, over the name */
+.rename {
+  position: fixed; z-index: 40; height: var(--h-sm); box-sizing: border-box; padding: 0 var(--s6); margin: 0; font: inherit;
+  color: var(--fg); background: var(--panel); border: 1px solid var(--muted); border-radius: var(--r-sm); box-shadow: var(--e2); outline: none;
+}
+
+/* ------------------------------------------------------------------ popover: the settings panel, under
+   the header's gear, over everything (main.js places it). It grows from the gear. */
+.set-pop {
+  position: fixed; inset: auto; margin: 0; width: min(340px, calc(100vw - 16px)); max-height: calc(100dvh - 16px); overflow-y: auto;
+  display: none; flex-direction: column; padding: var(--s6);
+  color: var(--fg); background: var(--panel); border: 1px solid var(--line-2); border-radius: var(--r-lg); box-shadow: var(--e3);
+  opacity: 0; transform: translateY(-2px) scale(0.98); transform-origin: top right;
+  transition: opacity var(--dur-2) var(--ease-in), transform var(--dur-2) var(--ease-in), overlay var(--dur-2) allow-discrete, display var(--dur-2) allow-discrete;
+}
+.set-pop:not(:popover-open) { pointer-events: none; }
+.set-pop:popover-open { display: flex; opacity: 1; transform: none; transition-duration: var(--dur-3); transition-timing-function: var(--ease-out); }
+@starting-style { .set-pop:popover-open { opacity: 0; transform: translateY(-2px) scale(0.98); } }
+.set-pop hr { width: auto; margin: 0 var(--s2); border: 0; border-top: 1px dashed var(--line); }
+.pop-sec { display: flex; flex-direction: column; gap: var(--s8); padding: var(--s8) var(--s8) var(--s12); }
+.pop-menu { display: flex; flex-direction: column; padding-top: var(--s4); }
+.mi {
+  display: flex; align-items: center; gap: var(--s8); height: var(--h-md); padding: 0 var(--s8); border: 0; border-radius: var(--r-sm);
+  background: none; color: var(--fg); font-size: var(--fs-body); text-align: left; transition: background-color var(--dur-1);
+}
+.mi:hover:not(:disabled) { background: var(--hover); }
+.mi:disabled { opacity: 0.45; cursor: default; }
+.mi svg { width: var(--ico-md); height: var(--ico-md); color: var(--muted); }
+.mi kbd { margin-left: auto; }
+.mi .chevr { margin-left: auto; margin-right: var(--s4); width: 6px; height: 6px; border-right: 1.5px solid var(--faint); border-bottom: 1.5px solid var(--faint); transform: rotate(-45deg); }
+/* the layout switch: each choice with its shape (in place of the seal) */
+.lay-seg button { display: flex; align-items: center; justify-content: center; gap: var(--s6); }
+.lay-seg button::before { opacity: 1; margin-right: 0; flex: none; width: 13px; height: 8px; border: 1.5px solid currentColor; border-radius: 2px; background: none; rotate: none; }
+.lay-seg button[data-id="port"]::before { width: 8px; height: 13px; }
+.lay-seg button[data-label]::after { display: none; }
+.out-head { display: flex; align-items: baseline; gap: var(--s8); min-height: 22px; }
+.out-head h3 { margin: 0; flex: none; }
+.out-head-sum { flex: 1; min-width: 0; text-align: right; font-size: var(--fs-caption); color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ------------------------------------------------------------------ dialogs: scale up from the middle */
+dialog {
+  border: 1px solid var(--line-2); border-radius: var(--r-xl); padding: 0; background: var(--panel); color: var(--fg);
+  width: min(720px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); box-shadow: var(--e4);
+  opacity: 0; transform: scale(0.98);
+  transition: opacity var(--dur-2) var(--ease-in), transform var(--dur-2) var(--ease-in), overlay var(--dur-2) allow-discrete, display var(--dur-2) allow-discrete;
+}
+dialog:not([open]) { pointer-events: none; }
+dialog[open] { opacity: 1; transform: none; transition-duration: var(--dur-3); transition-timing-function: var(--ease-out); }
+@starting-style { dialog[open] { opacity: 0; transform: scale(0.98); } }
+dialog::backdrop { background: var(--scrim); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); opacity: 0; transition: opacity var(--dur-2), overlay var(--dur-2) allow-discrete, display var(--dur-2) allow-discrete; }
+dialog[open]::backdrop { opacity: 1; }
+@starting-style { dialog[open]::backdrop { opacity: 0; } }
+.dialog { display: flex; flex-direction: column; gap: var(--s16); padding: var(--s20) var(--s24) var(--s24); }
+.dialog-head { display: flex; align-items: center; justify-content: space-between; margin-right: calc(-1 * var(--s8)); }
+.dialog-head h2 { margin: 0; font: 700 var(--fs-heading)/1.2 var(--font-display); letter-spacing: -0.02em; }
+.field { display: flex; flex-direction: column; gap: var(--s6); }
+.field .opt-row { grid-template-columns: 110px auto; justify-content: start; }
+.field .seg { max-width: 420px; }
+.help code { font: 500 var(--fs-caption) var(--font-mono); color: var(--muted); background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--r-xs); padding: 0 var(--s4); user-select: all; overflow-wrap: anywhere; }
+.storage { display: flex; flex-direction: column; gap: var(--s12); padding: var(--s12) var(--s16); border-radius: var(--r-md); border: 1px solid var(--line); background: var(--bg-2); }
+.storage > div:not(.storage-actions) { display: flex; flex-direction: column; gap: var(--s4); }
+.storage-actions { display: flex; gap: var(--s8); flex-wrap: wrap; }
+/* the keyboard shortcuts */
+.keys-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--s4) var(--s32); }
+.keys-grid h3 { grid-column: 1 / -1; margin: var(--s12) 0 var(--s2); }
+.keys-grid h3:first-child { margin-top: 0; }
+.keys-grid .k { display: flex; align-items: center; justify-content: space-between; gap: var(--s12); min-height: var(--h-ctl); border-bottom: 1px dashed var(--line); font-size: var(--fs-body); color: var(--muted); }
+
+.fatal {
+  position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: var(--s32); text-align: center;
+  background: var(--bg); color: var(--fg); font-size: var(--fs-title);
+}
+.fatal div { max-width: 560px; }
+.fatal h2 { margin: 0 0 var(--s8); font: 700 var(--fs-heading)/1.2 var(--font-display); }
+.fatal p { color: var(--muted); }
+
+/* ------------------------------------------------------------------ 5. motion
+   Entrances only where an element appears for a reason (it was just asked for, or just happened);
+   nothing that's re-drawn on every change animates in. */
+
+/* floating paper and toasts rise into place; the frame-swapping badge waits a moment first, so a
+   quick swap never flashes it */
+.result, .error-card, .sel-bar, .lost-card { transition: opacity var(--dur-3) var(--ease-out), translate var(--dur-3) var(--ease-out); }
+@starting-style { .result, .error-card, .sel-bar, .lost-card { opacity: 0; translate: 0 -6px; } }
+.render-badge { transition: opacity var(--dur-3) var(--ease-out) 300ms; }
+@starting-style { .render-badge { opacity: 0; } }
+.xbtn.run { transition: opacity var(--dur-2) var(--ease-out); }
+@starting-style { .xbtn.run { opacity: 0; } }
+
+/* the welcome: the mark pops, the line and the promises follow */
+#welcome:not([hidden]) > * { animation: rise var(--dur-4) var(--ease-out) backwards; }
+#welcome:not([hidden]) > .welcome-mark { animation: pop 520ms var(--ease-spring) backwards; }
+#welcome:not([hidden]) > :nth-child(2) { animation-delay: 80ms; }
+#welcome:not([hidden]) > :nth-child(3) { animation-delay: 140ms; }
+#welcome:not([hidden]) > :nth-child(4) { animation-delay: 200ms; }
+#welcome:not([hidden]) > :nth-child(5) { animation-delay: 260ms; }
+#welcome:not([hidden]) > :nth-child(6) { animation-delay: 320ms; }
+#welcome:not([hidden]) .sticker { animation: stick 480ms var(--ease-spring) backwards; }
+#welcome:not([hidden]) .sticker:nth-child(1) { animation-delay: 260ms; }
+#welcome:not([hidden]) .sticker:nth-child(2) { animation-delay: 330ms; }
+#welcome:not([hidden]) .sticker:nth-child(3) { animation-delay: 400ms; }
+#loading:not([hidden]) > * { animation: rise var(--dur-4) var(--ease-out) backwards; }
+#loading:not([hidden]) > .spinner { animation: rise var(--dur-4) var(--ease-out) backwards, spin 0.8s linear infinite; }
+@keyframes rise { from { opacity: 0; translate: 0 8px; } }
+@keyframes pop { from { opacity: 0; scale: 0.6; } }
+@keyframes stick { from { opacity: 0; scale: 1.4; rotate: calc(var(--tilt, 0deg) * -3); } }
+
+/* reduced motion: no movement, only instant changes (the spinners keep turning: they say work is
+   going on) */
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-1: 0ms; --dur-2: 0ms; --dur-3: 0ms; --dur-4: 0ms; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-delay: 0ms !important; }
+  .spinner, .spin, .char.making .ph::after { animation-duration: 1.6s !important; }
+  #loading:not([hidden]) > .spinner { animation-duration: 0.01ms, 1.6s !important; }
+  .poof { display: none; }
+}

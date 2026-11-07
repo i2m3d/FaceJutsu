@@ -1,0 +1,32 @@
+[package]
+name = "facejutsu"
+version = "0.1.1"
+edition = "2021"
+license = "AGPL-3.0-only"
+description = "FaceJutsu: the app's local server. Serves the embedded page, the models folder and the workspace."
+publish = false
+
+[[bin]]
+name = "FaceJutsu"
+path = "src/main.rs"
+
+[build-dependencies]
+winresource = "0.1"
+
+[dependencies]
+axum = { version = "0.8", features = ["ws"] }
+futures-util = "0.3"
+mime_guess = "2"
+open = "5"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream"] }
+rust-embed = { version = "8", features = ["debug-embed"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["fs", "io-util", "macros", "net", "rt-multi-thread", "sync", "time"] }
+toml = "0.9"
+tower-http = { version = "0.6", features = ["fs"] }
+
+[profile.release]
+lto = true
+strip = true
+codegen-units = 1

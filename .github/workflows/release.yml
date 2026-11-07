@@ -1,0 +1,66 @@
+name: release
+
+# Builds the app for each system. A pushed tag like v0.1.0 also publishes them as a draft release;
+# started by hand, the zips are just left on the run.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, target: x86_64-pc-windows-msvc, name: windows-x64, exe: FaceJutsu.exe }
+          - { os: macos-latest, target: aarch64-apple-darwin, name: macos-arm64, exe: FaceJutsu }
+          - { os: macos-latest, target: x86_64-apple-darwin, name: macos-x64, exe: FaceJutsu }
+          - { os: ubuntu-22.04, target: x86_64-unknown-linux-gnu, name: linux-x64, exe: FaceJutsu }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Toolchain
+        run: rustup target add ${{ matrix.target }}
+      - name: Test
+        # (an Intel build can't run its tests on an Apple silicon runner)
+        if: matrix.name != 'macos-x64'
+        working-directory: server
+        run: cargo test --target ${{ matrix.target }}
+      - name: Build
+        shell: bash
+        run: bash packaging/build-release.sh ${{ matrix.target }}
+      - name: Package
+        shell: bash
+        run: |
+          dir="FaceJutsu-${{ matrix.name }}"
+          mkdir -p "$dir"
+          cp "server/target/${{ matrix.target }}/release/${{ matrix.exe }}" "$dir/"
+          if [ "$RUNNER_OS" = Windows ]; then
+            7z a "$dir.zip" "$dir" > /dev/null
+          else
+            zip -qr "$dir.zip" "$dir"
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FaceJutsu-${{ matrix.name }}
+          path: FaceJutsu-${{ matrix.name }}.zip
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release create "$GITHUB_REF_NAME" --draft --generate-notes *.zip

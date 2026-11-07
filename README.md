@@ -31,7 +31,7 @@ The easiest way is in your browser, with nothing to install:
 
 The desktop app is optional. It's the same app, but it keeps your files in folders next to it instead of in your browser.
 
-**The downloads aren't code-signed**, so Windows and macOS warn you before running them. That's a reasonable warning for an app from a publisher they can't verify. If you'd rather not run it, use the browser version instead.
+**The downloads aren't code-signed**, so Windows and macOS warn you before running them. That's a reasonable warning for an app from a publisher they can't verify. If you'd rather not run it, use the browser version, or [build it yourself](#build-it-yourself).
 
 1. Download the zip for your system from the [latest release](../../releases/latest), and unzip it somewhere with room to spare.
 2. Start FaceJutsu:
@@ -74,10 +74,27 @@ Each model has its own license, which is yours to check before using it or what 
 - **Face enhancer:** [GPEN](https://github.com/yangxy/GPEN) (Yang et al.), no stated license
 - **Occlusion mask:** community-trained XSeg, on the architecture of [DeepFaceLab](https://github.com/iperov/DeepFaceLab) (GPL-3.0)
 
+## Build it yourself
+
+The code for the app, its local server and the static site is all here:
+
+| Folder | What's in it |
+| --- | --- |
+| `web` | the app, with its WebGPU and WebNN engines |
+| `server` | the local server, in Rust, which embeds `web` |
+| `site` | the static site |
+| `packaging` and `.github/workflows` | the release builds, and the workflow that builds and publishes the site |
+
+- **Run it from here:** with [Rust](https://rustup.rs) installed, run `cd server && cargo run -- --dev --home ..`, then open http://localhost:24817.
+- **Build the desktop app:** in Git Bash on Windows, or a terminal elsewhere, run `bash packaging/build-release.sh`. It needs Rust and Python.
+- **Build the static site:** run `python site/build.py`. It needs Python and Node, and the result in `out/site` is ready to upload to any static host.
+
 ## Use it responsibly
 
 Only swap the faces of people who have agreed to it. Don't use FaceJutsu to deceive, harass or impersonate anyone, or to make sexual images of anyone without their consent, or of minors at all. What you make and share is your responsibility.
 
 ## License
 
-FaceJutsu is provided as is, without warranty of any kind. The open source software it's built with is listed in the app, under **Storage & about**, then **Open source licenses**.
+FaceJutsu is free software under the [GNU Affero General Public License v3.0](LICENSE). Copyright The FaceJutsu authors. It's provided as is, without warranty of any kind.
+
+This covers FaceJutsu's own code, not the models, which have their own licenses (see [Models](#models)). The open source software it's built with is listed in the app, under **Storage & about**, then **Open source licenses**.

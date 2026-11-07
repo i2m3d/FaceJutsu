@@ -1,0 +1,8 @@
+# what builds and running from here make
+/models/
+/out/
+__pycache__/
+/server/target/
+/outputs/
+/data/
+/config.toml

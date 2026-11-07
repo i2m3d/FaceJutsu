@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FaceJutsu</title>
+<meta name="description" content="Swap faces in your photos and videos with one click. Fast, lightweight and completely private.">
+<meta name="theme-color" content="#0d0c0e" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#e7e1d6" media="(prefers-color-scheme: light)">
+<link rel="icon" href="app/icon.svg" type="image/svg+xml">
+<link rel="preload" href="app/fonts/instrument-sans-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="app/fonts/bricolage-grotesque-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="app/style.css">
+</head>
+<body>
+<!-- the mark (a wink behind a mask): its slit takes the colour of what it sits on (--mark-paper) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="mark" viewBox="0 0 64 64">
+    <path d="M49 19C54 15 57.5 10.5 60.5 5C60.5 12 57.5 18 52.5 22.5Z" style="fill:var(--accent);stroke:none"/>
+    <path d="M52.5 24.5C57 24 60.5 22 63 18.5C62.5 24 59 27.5 54 28.5Z" style="fill:var(--accent);stroke:none"/>
+    <circle cx="31" cy="35" r="25" style="fill:currentColor;stroke:none"/>
+    <rect x="9.5" y="26" width="43" height="15.5" rx="7.75" style="fill:var(--mark-paper);stroke:none"/>
+    <circle cx="22.5" cy="33.8" r="3.7" style="fill:currentColor;stroke:none"/>
+    <path d="M34 35.2Q39 29.4 44 35.2" style="fill:none;stroke:currentColor;stroke-width:3.6;stroke-linecap:round"/>
+  </symbol>
+</svg>
+<div class="app setup" id="app">
+
+  <!-- working area: the result, with the overlays on top -->
+  <main class="panel work" aria-label="Result">
+    <div class="canvas-box" id="canvasBox">
+      <canvas id="view" hidden></canvas>
+      <canvas id="player" hidden></canvas>
+      <svg class="marks" id="marks" aria-hidden="true"></svg>
+
+      <label class="panel-center open-drop" id="empty" for="tgtInput">
+        <div class="empty-art" aria-hidden="true">
+          <svg viewBox="0 0 112 88">
+            <rect class="frame" x="1" y="1" width="110" height="86" rx="12"/>
+            <svg class="mark" x="34" y="22" width="44" height="44" viewBox="0 0 64 64"><use href="#mark"/></svg>
+          </svg>
+        </div>
+        <h2>Drop a photo or video</h2>
+        <p class="lead">We'll do the hand seals. Faces are found right away; each person in a video gets a track on the timeline, and photos line up on it.</p>
+        <span class="ghost choose">Choose files</span>
+      </label>
+
+      <!-- until the models are ready, the whole window: what's missing from the models folder, or the loading
+           (on from the start, so the usual layout never shows before it) -->
+      <div class="setup-view" id="setup">
+        <div class="setup-card" id="welcome" hidden>
+          <svg class="welcome-mark mark" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark"/></svg>
+          <h1 class="welcome-title">Face swap no <em>jutsu.</em></h1>
+          <p class="lead">Swap faces in your photos and videos with one click. Fast, lightweight and completely private.</p>
+          <div class="stickers" role="list" aria-label="What it promises">
+            <span class="sticker paper" role="listitem" style="--tilt:-4deg">lightweight</span>
+            <span class="sticker ink" role="listitem" style="--tilt:3deg">one click</span>
+          </div>
+          <div class="needs" id="modelsNeeded" hidden>
+            <p class="help">Almost there. Grab the models and start swapping.</p>
+            <ul class="needs-list" id="modelsMissing"></ul>
+            <p class="help needs-saved">Saved to <code id="modelsPath"></code></p>
+          </div>
+          <div class="welcome-go">
+            <button class="primary" type="button" id="modelsAll" hidden>Download all</button>
+            <button class="primary" id="welcomeGo">Start</button>
+            <button class="ghost" type="button" id="modelsOpen" hidden>Open the folder</button>
+          </div>
+          <span class="help center" id="welcomeNote"></span>
+          <p class="help center">Only swap the faces of people who have agreed to it, and check each model's license before using it.</p>
+        </div>
+        <div class="setup-card" id="loading" hidden>
+          <div class="spinner" aria-hidden="true"></div>
+          <h2 id="loadingTitle">Getting ready…</h2>
+          <div class="bar-progress"><div id="loadingBar"></div></div>
+          <span class="help" id="loadingText"></span>
+        </div>
+      </div>
+
+      <div class="render-badge" id="renderBadge" hidden><span class="spin" aria-hidden="true"></span>Swapping this frame…</div>
+
+      <div class="error-card" id="errorCard" hidden></div>
+
+      <!-- the graphics card stopped: the models are loaded again, or why they aren't -->
+      <div class="lost-card" id="lostCard" role="status" hidden><span id="lostText"></span><button type="button" class="ghost sm" id="reloadBtn" hidden>Reload</button></div>
+      <div class="lost-card" id="serverCard" role="status" hidden><span id="serverText"></span><button type="button" class="ghost sm" id="serverReload" hidden>Reload</button></div>
+    </div>
+
+    <!-- what the last export made, and where it went -->
+    <div class="result" id="result" role="status" hidden>
+      <span class="ok-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+      <span class="meta" id="infoMeta"></span>
+      <button type="button" class="ghost sm" id="saveBtn" hidden title="Show it in the outputs folder">Show in folder</button>
+      <button type="button" class="x" id="resultClose" title="Close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></button>
+    </div>
+
+    <!-- a photo or video opened with its earlier edits: they can be reset -->
+    <div class="result resumed" id="resumed" role="status" hidden>
+      <span class="meta" id="resumedText"></span>
+      <button type="button" class="ghost sm" id="resumedReset">Reset</button>
+      <button type="button" class="x" id="resumedClose" title="Close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></button>
+    </div>
+
+    <div class="pill" id="toolPill" hidden>
+      <button type="button" id="compareBtn" hidden title="Hold to see the original"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 7h5v10H4zM15 7h5v10h-5z"/></svg><span>Hold to compare</span></button>
+      <span class="sep" aria-hidden="true"></span>
+      <button type="button" class="sq" id="zoomOut" title="Zoom out (- with the pointer over the canvas)" aria-label="Zoom out"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg></button>
+      <span class="zoom-level" id="zoomLevel" aria-live="polite">–</span>
+      <button type="button" class="sq" id="zoomIn" title="Zoom in (+ with the pointer over the canvas)" aria-label="Zoom in"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button>
+      <button type="button" class="sq" id="zoomFit" title="Reset zoom (0, or double-click)" aria-label="Reset zoom"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    </div>
+  </main>
+
+  <div class="split x" id="splitX" title="Drag to resize · double-click to reset"></div>
+  <div class="split y" id="splitY" title="Drag to resize · double-click to reset"></div>
+
+  <!-- timeline: for a video, transport and ruler, the clip's filmstrip, then one track per face; for photos, the
+       set's strip and the open photo's faces; before either, the models' readiness -->
+  <section class="panel tl" id="tgtDrop" aria-label="Timeline">
+    <input type="file" id="tgtInput" accept="image/*,video/*" multiple hidden>
+    <div class="tl-grid" id="tlGrid" hidden>
+      <div class="tl-row tl-head">
+        <div class="tl-h transport">
+          <button type="button" class="tbtn" id="tlStart" title="Back to the start" aria-label="Back to the start"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14M18 6l-9 6 9 6z"/></svg></button>
+          <button type="button" class="tbtn" id="tlPlay" title="Play (Space)" aria-label="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="ico-play" d="M8 5.5v13l10-6.5z"/><path class="ico-pause" d="M8 5v14M16 5v14"/></svg></button>
+          <span class="tl-time" id="tlTime"></span>
+          <button type="button" class="tbtn" id="tlMute" title="Mute (M)" aria-label="Mute"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="ico-spk" d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path class="ico-on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/><path class="ico-off" d="m16 9.5 5 5M21 9.5l-5 5"/></svg></button>
+          <button type="button" class="tbtn" id="tlAuto" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M8 10h8m-2.5-2.5L16 10m0 4H8m2.5 2.5L8 14"/></svg></button>
+        </div>
+        <div class="tl-lane ruler" id="tlRuler"></div>
+      </div>
+      <div class="tl-row clip-row">
+        <div class="tl-h">
+          <span class="nm-box">
+            <label class="nm" for="tgtInput" id="tgtName" title="Choose another photo or video"></label>
+            <small class="scan-note" id="scanNote" hidden><i class="spin" aria-hidden="true"></i><span id="scanText"></span></small>
+          </span>
+          <button type="button" class="tbtn tgt-clear" title="Remove" aria-label="Remove the video"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></button>
+        </div>
+        <div class="tl-lane film" id="tlFilm"></div>
+      </div>
+      <div class="tl-tracks" id="tlTracks"></div>
+      <div class="tl-row tl-over" id="tlOverRow" hidden><div class="tl-h"></div><div class="tl-lane" id="tlOver" title="Drag to move the zoomed view"></div></div>
+      <!-- draws the ruler, the filmstrip, the face segments and the playhead over the lanes -->
+      <canvas class="tl-canvas" id="tlCanvas"></canvas>
+    </div>
+    <div class="tl-empty" id="tlEmpty">
+      <div class="tl-state" id="tlReady" hidden>
+        <span class="ok-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+        <div class="tl-state-text">
+          <b>Ready to swap</b>
+          <span class="help" id="readyText"></span>
+        </div>
+      </div>
+    </div>
+    <!-- what can be done to the selection: over the selected segments (or the selected photos), only while
+         there's a selection, with only the actions that apply -->
+    <div class="sel-bar" id="selBar" role="toolbar" aria-label="Edit the selection" hidden>
+      <span class="lab" id="selLab"></span>
+      <button type="button" class="tbtn" id="splitBtn" title="Split the selected tracks at the playhead (S): the part after the cut gets settings of its own" aria-label="Split"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12"/></svg></button>
+      <button type="button" class="tbtn" id="joinBtn" title="Join the selected segments of a track (J), keeping the first one's settings" aria-label="Join"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h6M14 12h6M8 8l4 4-4 4M16 8l-4 4 4 4"/></svg></button>
+      <button type="button" class="tbtn" id="mergeBtn" title="Merge the selected tracks into one (Shift+J): for a person found as several tracks, never on screen together" aria-label="Merge tracks"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h3c4 0 5 6 9 6h4M4 18h3c4 0 5-6 9-6M17 9l3 3-3 3"/></svg></button>
+      <button type="button" class="tbtn" id="deleteBtn" title="Delete the selected segments, or the tracks selected by their header (Delete): their faces are left as they are" aria-label="Delete"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12M9 7V4h6v3"/></svg></button>
+      <button type="button" class="tbtn" id="psDelete" title="Remove the selected photos from the set (Delete): their work stays saved" aria-label="Remove the selected photos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12M9 7V4h6v3"/></svg></button>
+    </div>
+    <!-- photos: the video timeline's rows. The top row: previous / next and which photos are selected, and
+         the open one's details. The media row: the photos as a strip that fills the
+         height (a click opens one; Ctrl adds one to the selection, Shift a range). Then the faces of the
+         selected photos (a click selects one, Shift or Ctrl adds it; a character dropped on one gives it to it). -->
+    <div class="photo-set" id="photoSet" hidden>
+      <div class="tl-row tl-head">
+        <div class="tl-h transport">
+          <button type="button" class="tbtn" id="psPrev" title="Previous photo (←)" aria-label="Previous photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
+          <button type="button" class="tbtn" id="psNext" title="Next photo (→)" aria-label="Next photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+          <span class="tl-time" id="psWhich"></span>
+        </div>
+        <div class="tl-lane ruler"><span class="ps-info" id="psInfo"></span></div>
+      </div>
+      <div class="tl-row ps-film">
+        <div class="tl-h ps-h">
+          <span class="nm"><span id="psCount"></span><small id="psSel"></small></span>
+          <label class="tbtn" for="tgtInput" title="Add photos (or drop them here)" aria-label="Add photos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></label>
+          <button type="button" class="tbtn tgt-clear" title="Remove all photos" aria-label="Remove all photos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></button>
+        </div>
+        <div class="tl-lane ps-lane" id="psStrip" role="listbox" aria-label="Photos" aria-multiselectable="true" aria-orientation="horizontal"></div>
+      </div>
+      <div class="tl-row ps-faces">
+        <div class="tl-h ps-h"><b>Faces</b><small id="psFacesNote"></small></div>
+        <div class="tl-lane ps-lane" id="people" role="group" aria-label="Faces"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- settings: the header (undo, Export, the settings panel), then the characters and the settings of what's selected -->
+  <aside class="panel set" aria-label="Swap settings">
+    <header class="project" id="project">
+      <span class="logo" aria-hidden="true"><svg class="mark" viewBox="0 0 64 64"><use href="#mark"/></svg></span>
+      <span class="name wordmark" role="img" aria-label="FaceJutsu">face<span class="j">ȷ</span>utsu</span>
+      <span class="undo">
+        <button class="icon-btn" id="undoBtn" type="button" title="Undo (Ctrl+Z)" aria-label="Undo" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+        <button class="icon-btn" id="redoBtn" type="button" title="Redo (Ctrl+Y)" aria-label="Redo" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+      </span>
+      <!-- Export: its badge is the output's size (or format); while it runs, its progress and Stop -->
+      <button class="xbtn" id="goBtn" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM8 13.75h7M12.5 11l2.75 2.75-2.75 2.75"/></svg><span id="goLabel">Export</span><span class="badge" id="goBadge"></span></button>
+      <div class="xbtn run" id="goRun" role="progressbar" aria-label="Export progress" aria-valuemin="0" aria-valuemax="100" hidden>
+        <span class="t" id="progressText"></span>
+        <button class="x" id="stopBtn" type="button" title="Stop" aria-label="Stop"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" class="fill"/></svg></button>
+      </div>
+      <button class="icon-btn" id="settingsBtn" type="button" popovertarget="setPop" title="Settings: output, layout, theme, engine" aria-label="Settings" aria-haspopup="dialog">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+      </button>
+    </header>
+
+    <div class="steps" id="steps">
+      <!-- who the selected faces (every face, with none selected) become, and the settings of their
+           segments: one part, since each segment has a character and settings of its own -->
+      <section class="part faces-part" aria-label="Characters and segment settings">
+      <label class="src-start" id="srcStart" for="srcInput">
+        <div class="empty-art" aria-hidden="true">
+          <svg viewBox="0 0 112 88">
+            <rect class="frame" x="1" y="1" width="110" height="86" rx="12"/>
+            <svg class="person" x="34" y="22" width="44" height="44" viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+          </svg>
+        </div>
+        <b>Drop images of a character to use</b>
+        <span class="help">One image, or several of the same person, make one character. A sharp, front-facing face works best.</span>
+        <span class="ghost choose">Choose images</span>
+      </label>
+      <input type="file" id="srcInput" accept="image/*" multiple hidden>
+
+      <div class="part-body" id="facesBody">
+      <!-- what the settings below change: every face, or what's selected on the timeline -->
+      <div class="scope" id="scope" role="status" aria-live="polite" hidden>
+        <span class="scope-who" id="scopeWho" aria-hidden="true"></span>
+        <span class="scope-text"><span class="scope-over">Editing</span><b id="scopeTitle"></b><small id="scopeSub"></small></span>
+        <button type="button" class="icon-btn scope-all" id="scopeAll" title="Back to every face (Esc)" aria-label="Back to every face" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></button>
+      </div>
+      <section class="chars" id="chars" title="Drop images here to make a character of them">
+        <div class="chars-head"><span class="label">Characters</span></div>
+        <div class="char-grid" id="charGrid" role="radiogroup" aria-label="Character"></div>
+        <p class="help" id="charsHelp" hidden></p>
+      </section>
+
+      <section class="step" data-step="swap">
+        <button type="button" class="step-head" aria-expanded="true"><span class="step-title"><i class="seal">1</i>Swap</span><span class="step-sum"></span></button><button type="button" class="step-load" data-part="swapper" hidden></button>
+        <div class="step-body">
+          <div class="opt-row"><span class="hint" title="Higher is sharper but slower.&#10;Ctrl-click to pick several: each face gets the one that suits its size.">Detail</span><div class="seg" id="detailSeg" role="group" aria-label="Swap resolution"></div></div>
+        </div>
+      </section>
+
+      <section class="step" data-step="enhance" id="enhanceStep" hidden>
+        <button type="button" class="step-head" aria-expanded="true"><span class="step-title"><i class="seal">2</i>Enhance</span><span class="step-sum"></span></button><button type="button" class="step-load" data-part="enhancer" hidden></button>
+        <div class="step-body">
+          <div class="opt-row" id="enhanceRow"><span>Quality</span><div class="seg" id="enhanceSeg" role="radiogroup" aria-label="Enhance quality"></div></div>
+          <div class="opt-row" id="enhanceModeRow" hidden><span class="hint" title="Subtle only adds fine detail.&#10;Strong redraws the whole face.">Style</span><div class="seg" id="enhanceModeSeg" role="radiogroup" aria-label="What the enhancer may change"></div></div>
+          <label class="opt-row" id="enhanceBlendRow" hidden><span>Strength</span><input type="range" id="enhanceBlendRange" min="0" max="1" step="0.05" aria-label="Enhancer strength"><output id="enhanceBlendOut"></output></label>
+        </div>
+      </section>
+
+      <section class="step" data-step="mask">
+        <button type="button" class="step-head" aria-expanded="true"><span class="step-title"><i class="seal">3</i>Mask</span><span class="step-sum"></span></button><button type="button" class="step-load" data-part="occluder" hidden></button>
+        <div class="step-body">
+          <label class="opt-row"><span class="hint" title="How softly the swapped face blends in.">Edges</span><input type="range" id="blurRange" min="0" max="1" step="0.05" aria-label="Edge softness"><output id="blurOut"></output></label>
+          <div class="opt-row" id="occlusionRow" hidden><span>Objects</span><span class="sw-cap">Hands and glasses stay in front</span><div class="switch-box" id="occlusionSeg"></div></div>
+          <label class="opt-row" id="maskSizeRow" hidden><span class="hint" title="How much of the face gets swapped around what's in front of it. To the right the swap reaches closer to it, to the left more of the original stays around it.">Coverage</span><input type="range" class="centered" id="maskSizeRange" min="-1" max="1" step="0.05" aria-label="Coverage"><output id="maskSizeOut"></output></label>
+        </div>
+      </section>
+
+      </div>
+      </section>
+
+    </div>
+  </aside>
+</div>
+
+
+<dialog id="storageDlg" aria-labelledby="storageTitle">
+  <form method="dialog" class="dialog">
+    <div class="dialog-head">
+      <h2 id="storageTitle">Storage &amp; about</h2>
+      <button class="icon-btn" value="close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="storage">
+      <div><span class="label">Models</span><p class="help" id="storageText"></p><p class="help path" id="modelsDir"></p></div>
+      <div><span class="label">Outputs</span><p class="help">Your finished photos and videos.</p><p class="help path" id="outputsDir"></p></div>
+      <div><span class="label">Saved work</span><p class="help" id="savedText"></p><p class="help path" id="workDir"></p></div>
+      <div><span class="label">Cache</span><p class="help" id="patchText"></p><p class="help path" id="cacheDir"></p></div>
+      <div class="storage-actions">
+        <button class="ghost" type="button" id="clearSavedBtn" hidden>Forget my work</button>
+        <button class="ghost" type="button" id="clearPatchesBtn" hidden>Remove swapped frames</button>
+        <button class="ghost" type="button" id="openOutputsBtn">Open outputs folder</button>
+        <button class="ghost" type="button" id="openModelsBtn">Open models folder</button>
+      </div>
+    </div>
+    <p class="help">Models: <a href="https://github.com/deepinsight/insightface" target="_blank" rel="noopener">InsightFace</a> inswapper_128, SCRFD-10G and ArcFace R50 (non-commercial research license); <a href="https://github.com/yangxy/GPEN" target="_blank" rel="noopener">GPEN</a> face enhancer (Yang et al., no stated license); community-trained XSeg occlusion mask, on the architecture of <a href="https://github.com/iperov/DeepFaceLab" target="_blank" rel="noopener">DeepFaceLab</a> (GPL-3.0). Video: <a href="https://mediabunny.dev" target="_blank" rel="noopener">Mediabunny</a> (MPL-2.0). <a href="app/THIRD-PARTY-NOTICES.txt" target="_blank" rel="noopener">Open source licenses</a>. FaceJutsu is free software under the AGPL-3.0: <a href="https://github.com/i2m3d/FaceJutsu" target="_blank" rel="noopener">source code</a>.</p>
+    <p class="help"><b>Model licenses.</b> FaceJutsu doesn't include these models; you download them yourself. Some are for non-commercial research only and one states no license, so check each license before using them or what you make with them.</p>
+    <p class="help"><b>Use it responsibly.</b> Only swap the faces of people who have agreed to it. Don't use FaceJutsu to deceive, harass or impersonate anyone, or to make sexual images of anyone without their consent, or of minors at all. What you make and share is your responsibility.</p>
+  </form>
+</dialog>
+
+<!-- the settings panel (the header's gear): the output first, then the layout, the theme and the
+     engine, the keyboard shortcuts and the storage dialog -->
+<div class="set-pop" id="setPop" popover role="dialog" aria-labelledby="outTitle">
+  <section class="pop-sec">
+    <div class="out-head"><h3 id="outTitle">Output</h3><span class="out-head-sum" id="outPopSum"></span></div>
+    <div class="out-rows" id="outVideo">
+      <div class="opt-row"><span>Quality</span><div class="seg" id="outQualitySeg" role="radiogroup" aria-label="Video quality"></div></div>
+      <div class="opt-row" id="outRangeRow" hidden><span>Range</span><div class="seg" id="outRangeSeg" role="radiogroup" aria-label="What to export"></div></div>
+      <div class="opt-row" id="saveRow" hidden><span>Save</span><div class="seg" id="saveToSeg" role="radiogroup" aria-label="Where to save"></div></div>
+    </div>
+    <div class="out-rows" id="outPhoto" hidden>
+      <div class="opt-row" id="photoScopeRow" hidden><span>Photos</span><div class="seg" id="photoScopeSeg" role="radiogroup" aria-label="Which photos to save"></div></div>
+    </div>
+  </section>
+  <hr>
+  <section class="pop-sec">
+    <div class="opt-row" title="Switch with L"><span>Layout</span><div class="seg lay-seg" id="layoutSeg" role="radiogroup" aria-label="Layout"></div></div>
+    <div class="opt-row"><span>Theme</span><div class="seg" id="themeSeg" role="radiogroup" aria-label="Theme"></div></div>
+    <div class="opt-row" id="backendRow"><span>Engine</span><div class="seg" id="backendSeg" role="radiogroup" aria-label="Engine"></div></div>
+  </section>
+  <hr>
+  <div class="pop-menu">
+    <button type="button" class="mi" id="resetBtn" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v4.5h4.5"/></svg>Reset this video</button>
+    <button type="button" class="mi" id="keysBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/></svg>Keyboard shortcuts<kbd>?</kbd></button>
+    <button type="button" class="mi" id="storageBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="2.5"/><path d="M5 6v12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"/></svg>Storage &amp; about…<i class="chevr" aria-hidden="true"></i></button>
+  </div>
+</div>
+
+<dialog id="keys" aria-labelledby="keysTitle">
+  <form method="dialog" class="dialog">
+    <div class="dialog-head">
+      <h2 id="keysTitle">Keyboard shortcuts</h2>
+      <button class="icon-btn" value="close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="keys-grid" id="keysList"></div>
+  </form>
+</dialog>
+
+<div class="fatal" id="fatal" hidden></div>
+<script type="module" src="app/main.js"></script>
+</body>
+</html>
