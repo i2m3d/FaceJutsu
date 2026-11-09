@@ -1,10 +1,10 @@
 # FaceJutsu
 
-**Face swap no jutsu.** Swap faces in your photos and videos with one click, right on your own computer. Fast, lightweight and completely private: your files never leave your machine.
+**Face swap no jutsu.** Swap faces in your photos and videos with one click, on your iPhone or your computer. Fast, lightweight and completely private: your files never leave your device.
 
-**[Try it in your browser](https://i2m3d.github.io/FaceJutsu/)**: nothing to install.
+**[Get the iPhone app](../../releases/tag/ios-v0.1.0)** · **[Try it in your browser](https://i2m3d.github.io/FaceJutsu/)**: nothing to install.
 
-![Selecting a face, giving it a character, and the swap](assets/demo.gif)
+![Giving a face a character and swapping it, on an iPhone and in the browser](assets/demo.gif)
 
 ## What it does
 
@@ -13,11 +13,20 @@
 - **A real editor:** each person gets a track on the timeline, so you can split, trim and change who appears when.
 - **Live preview:** see the result as you edit, and the export reuses what the preview already made.
 - **Hands and glasses stay in front:** objects covering a face can stay on top of the swap.
-- **Private by design:** everything runs on your own graphics card. There are no accounts and nothing is uploaded.
+- **Private by design:** everything runs on your own device. There are no accounts and nothing is uploaded.
 
 ![The FaceJutsu editor after a swap](assets/swapped.png)
 
-## Get started
+## On your iPhone
+
+The full editor, in your pocket. Swap faces on the phone's own GPU, give every person their own track, and export with the original sound. Nothing leaves your phone.
+
+1. Download `FaceJutsu-iOS-0.1.0.ipa` from the [iPhone release](../../releases/tag/ios-v0.1.0).
+2. Install it with [SideStore](https://sidestore.io). It needs iOS 26.
+
+**The app isn't code-signed**, so SideStore installs it under your own Apple ID. You can check it against `SHA256SUMS` on the release page, or build it yourself from `mobile/`.
+
+## In your browser
 
 The easiest way is in your browser, with nothing to install:
 
@@ -27,7 +36,7 @@ The easiest way is in your browser, with nothing to install:
 
 ![The start page, ready to download the models](assets/start.png)
 
-### Or download the desktop app
+## Or download the desktop app
 
 The desktop app is optional. It's the same app, but it keeps your files in folders next to it instead of in your browser.
 
@@ -43,6 +52,8 @@ The desktop app is optional. It's the same app, but it keeps your files in folde
 You'll need a recent version of **Chrome or Edge** and a computer with a graphics card. Keep the FaceJutsu window open while you work.
 
 ## Your files
+
+**On your iPhone**, your models and saved work stay inside the app. Finished photos and videos go to Photos or Files.
 
 **In the browser**, your models and saved work stay in the browser's private storage for the site, so clearing the site's data removes them. Finished photos and videos arrive as normal downloads, or with **Save as…**, a video goes straight to a file you pick.
 
@@ -83,11 +94,13 @@ The code for the app, its local server and the static site is all here:
 | `web` | the app, with its WebGPU and WebNN engines |
 | `server` | the local server, in Rust, which embeds `web` |
 | `site` | the static site |
+| `mobile` | the iPhone app and its engine |
 | `packaging` and `.github/workflows` | the release builds, and the workflow that builds and publishes the site |
 
 - **Run it from here:** with [Rust](https://rustup.rs) installed, run `cd server && cargo run -- --dev --home ..`, then open http://localhost:24817.
 - **Build the desktop app:** in Git Bash on Windows, or a terminal elsewhere, run `bash packaging/build-release.sh`. It needs Rust and Python.
 - **Build the static site:** run `python site/build.py`. It needs Python and Node, and the result in `out/site` is ready to upload to any static host.
+- **Build the iPhone app:** see [`mobile/ios/README.md`](mobile/ios/README.md).
 
 ## Use it responsibly
 

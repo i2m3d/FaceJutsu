@@ -6,3 +6,11 @@ __pycache__/
 /outputs/
 /data/
 /config.toml
+# mobile build output
+/mobile/shared/target/
+/mobile/ios/build/
+/mobile/ios/.build/
+/mobile/ios/xtool/
+/mobile/ios/.swiftpm/
+/mobile/ios/Sources/FaceJutsu/Config/
+*.ipa

@@ -1,0 +1,37 @@
+[package]
+name = "facejutsu-engine"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-only"
+description = "FaceJutsu: the engine of the iOS app."
+publish = false
+
+[lib]
+name = "facejutsu_engine"
+# lib for tests and the bindings generator, staticlib for the app
+crate-type = ["lib", "staticlib"]
+
+[[bin]]
+# generates the Swift bindings from the built library
+name = "uniffi-bindgen"
+path = "uniffi-bindgen.rs"
+required-features = ["bindgen"]
+
+[features]
+bindgen = ["uniffi/cli"]
+
+[dependencies]
+uniffi = "0.32"
+half = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# the Metal backend
+[target.'cfg(target_vendor = "apple")'.dependencies]
+objc2 = "0.6"
+objc2-foundation = "0.3"
+objc2-metal = "0.3"
+
+[profile.release]
+lto = true
+codegen-units = 1

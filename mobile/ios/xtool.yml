@@ -1,0 +1,4 @@
+version: 1
+bundleID: io.github.i2m3d.facejutsu
+infoPath: Info.plist
+iconPath: Resources/AppIcon.png
